@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dartboard Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Dartboard Tracker</h1>
+  <div style="display: flex; gap: 10px;">
+    <canvas id="dartboard" width="500" height="500"></canvas>
+    <div id="scoreColumn" style="width: 100px; height: 500px; display: flex; flex-direction: column; gap: 0;">
+      <div class="score-box">.</div>
+      <div class="score-box">.</div>
+      <div class="score-box">.</div>
+    </div>
+  </div>
+  <div id="stats">
+    <p>Total Throws: <span id="total">0</span></p>
+    <p>Average Score: <span id="avg">0</span></p>
+  </div>
+  <button id="reset">Reset</button>
+  <script src="script.js"></script>
+</body>
+</html>
