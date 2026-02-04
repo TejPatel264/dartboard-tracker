@@ -6,20 +6,50 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Dartboard Tracker</h1>
-  <div style="display: flex; gap: 10px;">
+  <div id="viewport">
+  <div id="pages">
+  <section id="tracker">
+  <div id="instructions">
+    <h1>Dartboard Tracker</h1>
+    <p>Click on the dartboard to record a throw.</p>
+    <p>Use the buttons below to manage your throws.</p>
+  </div>
+  <div style="display: flex; gap: 2px;">
     <canvas id="dartboard" width="500" height="500"></canvas>
-    <div id="scoreColumn" style="width: 100px; height: 500px; display: flex; flex-direction: column; gap: 0;">
+    <div id="score-column">
       <div class="score-box">.</div>
       <div class="score-box">.</div>
       <div class="score-box">.</div>
     </div>
   </div>
-  <div id="stats">
-    <p>Total Throws: <span id="total">0</span></p>
-    <p>Average Score: <span id="avg">0</span></p>
-  </div>
+  <div id="buttons">
   <button id="reset">Reset</button>
+  <button id="delete-last-throw">Delete last throw</button>
+  <button id="bounce-out">Bounce out</button>
+  </div>
+  <div>
+    <button id="view-stats" class="switch-page">View More Stats &gt;</button>
+  </div>
+  </section>
+  <section id="stats">
+    <button id="back-to-tracker" class="switch-page">&lt; Back To Tracker</button>
+    <div style="display: flex; flex-direction: column; gap: 0px;">
+    <div id="statsRow" style="width: 600px; height: 20px; display: flex; flex-direction: row; gap: 0;">
+      <div class="stat">Visits</div>
+      <div class="stat">180</div>
+      <div class="stat">171+</div>
+      <div class="stat">131+</div>
+      <div class="stat">91+</div>
+    </div>
+    <div id="statsRow" style="width: 600px; height: 50px; display: flex; flex-direction: row; gap: 0;">
+      <div class="stat-box">0</div>
+      <div class="stat-box">0</div>
+      <div class="stat-box">0</div>
+      <div class="stat-box">0</div>
+      <div class="stat-box">0</div>
+    </div>
+  </div>
+  </section>
   <script src="script.js"></script>
 </body>
 </html>
