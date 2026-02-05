@@ -1,5 +1,5 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: monospace, Arial, sans-serif;
     display: flex;
     flex-direction: column;
     margin: 0px;
@@ -40,7 +40,7 @@ section {
 h1 {
     font-size: 32px;
     padding: 0px;
-    margin: 5px;
+    margin: 50px;
 }
 
 #instructions p {
@@ -103,7 +103,12 @@ button {
     border-width: 1px;
     border-radius: 6px;
     opacity: 0.8;
+    font-family: monospace;
     
+}
+
+#home button {
+    font-size: 20px;
 }
 
 .switch-page {
