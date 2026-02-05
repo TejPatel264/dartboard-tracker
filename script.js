@@ -3,9 +3,11 @@ const ctx = canvas.getContext("2d");
 const width = canvas.width;
 const height = canvas.height;
 const center = {x: width/2, y: height/2};
+let isGame = false;
 
 const sectorScores = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 let throws = [];
+let visitScores = [];
 let validThrows;
 
 
@@ -96,10 +98,64 @@ function update(){
   drawDartboard();
   updateStats();
   lastThreeThrows();
+  gameScoreUpdate();
 }
 
-drawDartboard();
-updateStats();
+function drawGameScore(num=501) {
+  ctx.fillStyle = "#111";
+  ctx.font = "bold 20px monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+
+  ctx.fillText(`Score: ${num}`,1,1);
+
+}
+
+function gameScoreUpdate() {
+  if (isGame) {
+    let sum = 0
+    visitScores.forEach(t => sum += t)
+    drawGameScore(501 - sum);
+    if (sum == 501) {
+      setTimeout(() => {
+        ctx.clearRect(0,0,width,height);
+        ctx.fillStyle = "red";
+        ctx.font = "bold 48px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("CHECKOUT!",250,250);
+      updateStats()
+      }, 1000)
+    }
+    if (sum > 501 || sum == 500) {
+      setTimeout(() => {
+        ctx.clearRect(0,0,width,height);
+        ctx.fillStyle = "red";
+        ctx.font = "bold 48px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("BUST!",250,250);
+        updateStats();
+      }, 1000)
+      setTimeout(() => {
+        for (let i=0; i<(throws.length%3||3); i++) {
+          console.log(throws.slice(-(throws.length%3||3)))
+          throws[throws.length - 1 - i].score = 0;
+          throws[throws.length - 1 - i].scoreBoard = 0;
+        }
+        while (throws.length % 3 != 0) {
+          throws.push({x:null, y:null, dx:null, dy:null, score:null, scoreBoard:"-", type:"notThrown"});
+        }
+        update();
+      }, 3000)
+    }
+  }
+}
+
+function init() {
+  drawDartboard();
+  updateStats();
+}
 
 canvas.addEventListener("click", (e) => {
   const rect = canvas.getBoundingClientRect();
@@ -127,16 +183,17 @@ canvas.addEventListener("click", (e) => {
 
   score = Math.floor(score);
 
-  throws.push({x, y, dx, dy, score, scoreBoard, bounce:false});
+  throws.push({x, y, dx, dy, score, scoreBoard, type:"normal"});
   validThrows = throws.filter(t => t.x !== null && t.y !== null);
 
   update();
 });
 
 function updateStats() {
-  const total = throws.length;
+  const thrown = t => t.type != "notThrown"
+  const total = throws.filter(thrown).length;
   //const totalValid = validThrows.length;
-  const visitScores = [];
+  visitScores = [];
   const visitStats = {s180:0, s171:0, s131:0, s91:0}
   const throwStats = {T20: 0, T19: 0, T18: 0, T17: 0, D20: 0, D16: 0, BULL: 0}
 
@@ -159,7 +216,7 @@ function updateStats() {
   for (let i=0; i < throws.length; i+=3) {
     const visit = throws.slice(i,i+3);
     const visitScore = visit.reduce((sum, t) => sum + t.score, 0)
-    visitScores.push(visitScore)
+    visitScores[i/3] = visitScore
   }
 
   visitScores.forEach(v => {
@@ -183,13 +240,14 @@ function updateStats() {
   statBox[2].innerText = visitStats.s171
   statBox[3].innerText = visitStats.s131
   statBox[4].innerText = visitStats.s91
+
 }
 
 function lastThreeThrows() {
   const scoreBox = document.querySelectorAll(".score-box");
   const total = throws.length;
   const currentScoreBox = document.querySelector("[data-current]");
-  const notBounceOut = t => !t.bounce
+  const normalThrow = t => t.type == "normal"
   const currentThrowOfVisit = total % 3 || 3
   const currentVisit = throws.slice(-currentThrowOfVisit)
 
@@ -200,8 +258,11 @@ function lastThreeThrows() {
     return;
   }
 
+  let sum = 0;
+  throws.forEach(t => sum += t.score)
+
   currentVisit
-  .filter(notBounceOut)
+  .filter(normalThrow)
   .forEach((t,i,arr) => 
     drawDartMarker(t.x, t.y, i == arr.length - 1));
 
@@ -215,6 +276,7 @@ function lastThreeThrows() {
 
 document.getElementById("reset").addEventListener("click", () => {
   throws = [];
+  visitScores = [];
   update();
 });
 
@@ -224,15 +286,32 @@ document.getElementById("delete-last-throw").addEventListener("click", () => {
 });
 
 document.getElementById("bounce-out").addEventListener("click", () => {
-  throws.push({x:null, y:null, dx:null, dy:null, score:0, scoreBoard:0, bounce:true});
+  throws.push({x:null, y:null, dx:null, dy:null, score:0, scoreBoard:0, type:"bounceOut"});
   update()
 })
 
+document.getElementById("practice").addEventListener("click", () => {
+  init()
+  document.getElementById("pages").style.transform = "translateX(-100vw)";
+})
+
+document.getElementById("game").addEventListener("click", () => {
+  init()
+  document.getElementById("pages").style.transform = "translateX(-100vw)";
+  isGame = true;
+  drawGameScore();
+})
+
+document.getElementById("home-page").addEventListener("click", () => {
+  document.getElementById("pages").style.transform = "translateX(0vw)";
+  isGame = false;
+})
+
 document.getElementById("view-stats").addEventListener("click", () => {
-  document.getElementById("pages").style.transform = "translateX(-100vw)"
+  document.getElementById("pages").style.transform = "translateX(-200vw)"
 })
 
 document.getElementById("back-to-tracker").addEventListener("click", () => {
-  document.getElementById("pages").style.transform = "translateX(0vw)"
+  document.getElementById("pages").style.transform = "translateX(-100vw)";
 })
 
