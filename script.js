@@ -4,12 +4,15 @@ const width = canvas.width;
 const height = canvas.height;
 const center = {x: width/2, y: height/2};
 let isGame = false;
+let isPaused = false;
+let startLeg = 0;
 
 const sectorScores = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 let throws = [];
 let visitScores = [];
 let validThrows;
 
+const newLegBtn = document.getElementById("new-leg")
 
 function drawCircle(r,w=1,fill="rgb(0,0,0,0)") {
     ctx.fillStyle = fill;
@@ -95,6 +98,8 @@ function drawDartboard() {
 }
 
 function update(){
+  isPaused = false;
+  canvas.style.cursor = "crosshair"
   drawDartboard();
   updateStats();
   lastThreeThrows();
@@ -107,39 +112,59 @@ function drawGameScore(num=501) {
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
 
-  ctx.fillText(`Score: ${num}`,1,1);
+  ctx.fillText(`Score: ${num}`,2,1);
 
 }
 
 function gameScoreUpdate() {
   if (isGame) {
     let sum = 0
-    visitScores.forEach(t => sum += t)
+    let isValidCheckout = throws[throws.length-1].scoreBoard[0] == "D" || throws[throws.length-1].scoreBoard == "BULL"
+    visitScores.slice(startLeg).forEach(t => sum += t)
     drawGameScore(501 - sum);
-    if (sum == 501) {
+    if (sum == 501 && isValidCheckout) {
+      isPaused = true;
       setTimeout(() => {
-        ctx.clearRect(0,0,width,height);
-        ctx.fillStyle = "red";
+        canvas.style.cursor = "default";
+        ctx.fillStyle = "rgb(0,0,0,0.75)"
+        ctx.fillRect(0,0,width,height);
+        ctx.fillStyle = "#f5f5f5";
         ctx.font = "bold 48px monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("CHECKOUT!",250,250);
-      updateStats()
+        ctx.fillText("CHECKOUT",250,240);
+
+        ctx.strokeStyle = "#d4a017"
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(190,260);
+        ctx.lineTo(310,260);
+        ctx.stroke();
+
+        newLegBtn.toggleAttribute("hidden")
       }, 1000)
     }
-    if (sum > 501 || sum == 500) {
+    if (sum > 501 || sum == 500 || (sum == 501 && !isValidCheckout)) {
+      isPaused = true;
       setTimeout(() => {
-        ctx.clearRect(0,0,width,height);
-        ctx.fillStyle = "red";
-        ctx.font = "bold 48px monospace";
+        canvas.style.cursor = "default";
+        ctx.fillStyle = "rgb(0,0,0,0.85)"
+        ctx.fillRect(0,0,width,height);
+        ctx.fillStyle = "#ddd";
+        ctx.font = "bold 40px monospace";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("BUST!",250,250);
-        updateStats();
+        ctx.fillText("BUST",250,240);
+
+        ctx.strokeStyle = "#888"
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(230,258);
+        ctx.lineTo(270,258);
+        ctx.stroke();
       }, 1000)
       setTimeout(() => {
         for (let i=0; i<(throws.length%3||3); i++) {
-          console.log(throws.slice(-(throws.length%3||3)))
           throws[throws.length - 1 - i].score = 0;
           throws[throws.length - 1 - i].scoreBoard = 0;
         }
@@ -147,7 +172,7 @@ function gameScoreUpdate() {
           throws.push({x:null, y:null, dx:null, dy:null, score:null, scoreBoard:"-", type:"notThrown"});
         }
         update();
-      }, 3000)
+      }, 2500)
     }
   }
 }
@@ -158,6 +183,8 @@ function init() {
 }
 
 canvas.addEventListener("click", (e) => {
+  if (isPaused) return;
+
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
@@ -205,10 +232,10 @@ function updateStats() {
     ctx.textAlign = "left";
     ctx.textBaseline = "bottom";
 
-    ctx.fillText(`Throws: ${total}`,1,499);
+    ctx.fillText(`Throws: ${total}`,2,499);
 
     ctx.textAlign = "right";
-    ctx.fillText(`Average: ${avg}`,499,499);
+    ctx.fillText(`Average: ${avg}`,498,499);
   }
   
   drawStats()
@@ -235,11 +262,18 @@ function updateStats() {
 })
 
   const statBox = document.querySelectorAll(".stat-box")
-  statBox[0].innerText = visitScores.length
-  statBox[1].innerText = visitStats.s180
-  statBox[2].innerText = visitStats.s171
-  statBox[3].innerText = visitStats.s131
-  statBox[4].innerText = visitStats.s91
+  statBox[0].innerText = total
+  statBox[1].innerText = avg
+  statBox[2].innerText = throwStats.T20
+  statBox[3].innerText = throwStats.T19 + throwStats.T18 + throwStats.T17
+  statBox[4].innerText = throwStats.D20
+  statBox[5].innerText = throwStats.D16
+  statBox[6].innerText = throwStats.BULL
+  statBox[7].innerText = visitScores.length
+  statBox[8].innerText = visitStats.s180
+  statBox[9].innerText = visitStats.s171
+  statBox[10].innerText = visitStats.s131
+  statBox[11].innerText = visitStats.s91
 
 }
 
@@ -274,6 +308,8 @@ function lastThreeThrows() {
   scoreBox[currentThrowOfVisit - 1].toggleAttribute("data-current");
 }
 
+const subtitle = document.getElementById("subtitle")
+
 document.getElementById("reset").addEventListener("click", () => {
   throws = [];
   visitScores = [];
@@ -281,22 +317,26 @@ document.getElementById("reset").addEventListener("click", () => {
 });
 
 document.getElementById("delete-last-throw").addEventListener("click", () => {
-  throws.pop()
-  update()
+  if (isGame && isPaused) newLegBtn.toggleAttribute("hidden");
+  throws.pop();
+  update();
 });
 
 document.getElementById("bounce-out").addEventListener("click", () => {
+  if (isPaused) return;
   throws.push({x:null, y:null, dx:null, dy:null, score:0, scoreBoard:0, type:"bounceOut"});
-  update()
+  update();
 })
 
 document.getElementById("practice").addEventListener("click", () => {
-  init()
+  init();
+  subtitle.innerText = "Practice Mode";
   document.getElementById("pages").style.transform = "translateX(-100vw)";
 })
 
 document.getElementById("game").addEventListener("click", () => {
   init()
+  subtitle.innerText = "Game Mode"
   document.getElementById("pages").style.transform = "translateX(-100vw)";
   isGame = true;
   drawGameScore();
@@ -315,3 +355,11 @@ document.getElementById("back-to-tracker").addEventListener("click", () => {
   document.getElementById("pages").style.transform = "translateX(-100vw)";
 })
 
+newLegBtn.addEventListener("click", () => {
+  while (throws.length % 3 != 0) {
+          throws.push({x:null, y:null, dx:null, dy:null, score:null, scoreBoard:"-", type:"notThrown"});
+        }
+  startLeg = throws.length / 3;
+  update();
+  newLegBtn.toggleAttribute("hidden");
+})
