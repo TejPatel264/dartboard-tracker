@@ -11,14 +11,17 @@
   <section id="home">
     <h1>Darts Tracker</h1>
     <button id="practice" class="switch-page">Practice</button>
+    <p>Throw darts and have fun!</p>
     <button id="game" class="switch-page">Game</button>
+    <p>A race to 501!</p>
   </section>
   <section id="tracker">
   <div id="instructions">
+    <h2 id="subtitle"></h2>
     <p>Click on the dartboard to record a throw.</p>
     <p>Use the buttons below to manage your throws.</p>
   </div>
-  <div style="display: flex; gap: 2px;">
+  <div style="display: flex;">
     <canvas id="dartboard" width="500" height="500"></canvas>
     <div id="score-column">
       <div class="score-box">.</div>
@@ -26,34 +29,57 @@
       <div class="score-box">.</div>
     </div>
   </div>
-  <div id="buttons">
-  <button id="reset">Reset</button>
-  <button id="delete-last-throw">Delete Last Throw</button>
-  <button id="bounce-out">Bounce Out</button>
+  <div class="buttons">
+    <button id="bounce-out">Bounce Out</button>
+    <button id="delete-last-throw">Delete Last Throw</button>
+    <button id="reset">Reset</button>
+    <button id="new-leg" hidden>New Leg</button>
   </div>
-  <div>
+  <div class="buttons">
     <button id="home-page" class="switch-page">&lt; Home Page</button>
     <button id="view-stats" class="switch-page">View More Stats &gt;</button>
   </div>
   </section>
   <section id="stats">
-    <button id="back-to-tracker" class="switch-page">&lt; Back To Tracker</button>
     <div style="display: flex; flex-direction: column; gap: 0px;">
-    <div id="statsRow" style="width: 600px; height: 20px; display: flex; flex-direction: row; gap: 0;">
-      <div class="stat">Visits</div>
-      <div class="stat">180</div>
-      <div class="stat">171+</div>
-      <div class="stat">131+</div>
-      <div class="stat">91+</div>
+      <div class="stats-names">
+        <div class="stat">Throws</div>
+        <div class="stat">Average</div>
+      </div>
+      <div class="stats-numbers">
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+      </div>
+      <div class="stats-names">
+        <div class="stat">T20</div>
+        <div class="stat">T19/T18/T17</div>
+        <div class="stat">D20</div>
+        <div class="stat">D16</div>
+        <div class="stat">BULL</div>
+      </div>
+      <div class="stats-numbers">
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+      </div>
+      <div class="stats-names">
+        <div class="stat">Visits</div>
+        <div class="stat">180</div>
+        <div class="stat">171+</div>
+        <div class="stat">131+</div>
+        <div class="stat">91+</div>
+      </div>
+      <div class="stats-numbers">
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+      </div>
     </div>
-    <div id="statsRow" style="width: 600px; height: 50px; display: flex; flex-direction: row; gap: 0;">
-      <div class="stat-box">0</div>
-      <div class="stat-box">0</div>
-      <div class="stat-box">0</div>
-      <div class="stat-box">0</div>
-      <div class="stat-box">0</div>
-    </div>
-  </div>
+    <button id="back-to-tracker" class="switch-page">&lt; Back To Tracker</button>
   </section>
   <script src="script.js"></script>
 </body>
