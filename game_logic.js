@@ -1,5 +1,5 @@
-import { appState, gameState, sessionState } from "/./states.js"
-import { btn } from "/./buttons.js"
+import { appState, gameState, sessionState } from "./states.js"
+import { btn } from "./buttons.js"
 
 let { canvas, ctx, width, height, center, } = appState
 

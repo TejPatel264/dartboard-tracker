@@ -1,9 +1,9 @@
 
-import { btn } from "/./buttons.js"
-import { appState, gameState, sessionState } from "/./states.js";
-import { init, update } from "/./game_logic.js";
-import { getDartThrow, handleDartThrow } from "/./game_logic.js";
-import { drawGameScore } from "/./game_logic.js";
+import { btn } from "./buttons.js"
+import { appState, gameState, sessionState } from "./states.js";
+import { init, update } from "./game_logic.js";
+import { getDartThrow, handleDartThrow } from "./game_logic.js";
+import { drawGameScore } from "./game_logic.js";
 
 let {canvas,} = appState;
 
