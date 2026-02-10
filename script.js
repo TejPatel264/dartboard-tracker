@@ -1,9 +1,9 @@
 
 import { btn } from "./buttons.js"
 import { appState, gameState, sessionState } from "./states.js";
-import { init, update } from "./game_logic.js";
-import { getDartThrow, handleDartThrow } from "./game_logic.js";
-import { drawGameScore } from "./game_logic.js";
+import { init, update } from "./logic.js";
+import { getDartThrow, handleDartThrow } from "./logic.js";
+import { drawGameScore } from "./logic.js";
 
 let {canvas,} = appState;
 
@@ -84,3 +84,4 @@ document.getElementById("view-stats").addEventListener("click", () => {
 document.getElementById("back-to-tracker").addEventListener("click", () => {
   page.style.transform = "translateX(-100vw)";
 })
+
