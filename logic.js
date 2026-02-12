@@ -1,5 +1,5 @@
-import { appState, gameState} from "/./states.js"
-import { btn } from "/./buttons.js"
+import { appState, gameState} from "./states.js"
+import { btn } from "./buttons.js"
 
 let { canvas, ctx, width, height, center, } = appState
 
@@ -325,4 +325,5 @@ export function update(session) {
   updateSessionStatsUI(session);
   lastThreeThrows(session);
   if (gameState.isGame) updateGameScore(session);
+
 }
