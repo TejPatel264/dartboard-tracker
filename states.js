@@ -17,10 +17,3 @@ export let gameState = {
     isGame: false,
     leg: null
 };
-
-export let sessionState = {
-    throws: [],
-    visitScores: [],
-    throwStats: {T20: 0, T19: 0, T18: 0, T17: 0, D20: 0, D16: 0, BULL: 0},
-    visitStats: {s180:0, s171:0, s131:0, s91:0}
-};

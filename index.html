@@ -30,10 +30,9 @@
     </div>
   </div>
   <div class="buttons">
-    <button id="bounce-out">Bounce Out</button>
-    <button id="delete-last-throw">Delete Last Throw</button>
-    <button id="reset">Reset</button>
-    <button id="new-leg" hidden>New Leg</button>
+    <button id="bounce-out" class="manage-throw">Bounce Out</button>
+    <button id="delete-last-throw" class="manage-throw">Delete Last Throw</button>
+    <button id="new-leg" class="manage-throw" hidden>New Leg</button>
   </div>
   <div class="buttons">
     <button id="home-page" class="switch-page">&lt; Home Page</button>
@@ -41,6 +40,12 @@
   </div>
   </section>
   <section id="stats">
+    <h2>Your Stats</h2>
+    <div class="pill">
+    <div class="slider"></div>
+    <button id="session-stats" class="switch-stats">Session</button>
+    <button id="all-time-stats" class="switch-stats">All Time</button>
+    </div>
     <div style="display: flex; flex-direction: column; gap: 0px;">
       <div class="stats-names">
         <div class="stat">Throws</div>
@@ -84,4 +89,3 @@
   <script type="module" src="script.js"></script>
 </body>
 </html>
-

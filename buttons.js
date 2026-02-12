@@ -1,11 +1,13 @@
-const bounceOutBtn = document.getElementById("bounce-out");
-const delLastThrowBtn = document.getElementById("delete-last-throw");
-const newLegBtn = document.getElementById("new-leg");
-const resetBtn = document.getElementById("reset");
+const bounceOut = document.getElementById("bounce-out");
+const delLastThrow = document.getElementById("delete-last-throw");
+const newLeg = document.getElementById("new-leg");
+const sessionStats = document.getElementById("session-stats")
+const allTimeStats = document.getElementById("all-time-stats")
 
 export const btn = {
-    bounceOutBtn,
-    delLastThrowBtn,
-    newLegBtn,
-    resetBtn
+    bounceOut,
+    delLastThrow,
+    newLeg,
+    sessionStats,
+    allTimeStats
 }
