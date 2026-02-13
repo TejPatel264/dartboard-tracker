@@ -196,7 +196,7 @@ function updateSessionStats(session) {
   const totalThrows = session.stats.basic.totalThrows
   
   session.raw.visits.length = 0;
-  session.stats.scoring = {throws: {T20: 0, T19: 0, T18: 0, T17: 0, D20: 0, D16: 0,BULL: 0},visits:{v180:0, v171:0, v131:0, v91:0}}
+  session.stats.scoring = {throws: {T20: 0, T19: 0, T18: 0, T17: 0, D20: 0, D16: 0,BULL: 0},visits:{v180:0, v171:0, v131:0, v91:0, v51:0}}
 
   session.stats.basic.average = (3*throws.reduce((sum,t)=>sum+t.score,0)/Math.max(1,totalThrows)).toFixed(2);
   
@@ -212,6 +212,7 @@ function updateSessionStats(session) {
     else if (v >= 171) session.stats.scoring.visits.v171++;
     else if (v >= 131) session.stats.scoring.visits.v131++;
     else if (v >= 91) session.stats.scoring.visits.v91++;
+    else if (v >= 51) session.stats.scoring.visits.v51++;
   })
 
   throws.forEach(t => {
@@ -256,18 +257,18 @@ function updateSessionStatsUI(session) {
 
 export function showAllTimeStats(longTermStats) {
   const statBox = document.querySelectorAll(".stat-box")
-  statBox[0].innerText = longTermStats.totalThrows
-  statBox[1].innerText = longTermStats.average
-  statBox[2].innerText = longTermStats.totalT20s
-  statBox[3].innerText = longTermStats.totalBigTrebles
-  statBox[4].innerText = longTermStats.totalD20s
-  statBox[5].innerText = longTermStats.totalD16s
-  statBox[6].innerText = longTermStats.totalBulls
-  statBox[7].innerText = longTermStats.totalVisits
-  statBox[8].innerText = longTermStats.total180s
-  statBox[9].innerText = longTermStats.total171
-  statBox[10].innerText = longTermStats.total131
-  statBox[11].innerText = longTermStats.total91
+  statBox[0].innerText = longTermStats.basic.totalThrows
+  statBox[1].innerText = longTermStats.basic.average
+  statBox[2].innerText = longTermStats.scoring.throws.T20
+  statBox[3].innerText = longTermStats.scoring.throws.T19 + longTermStats.scoring.throws.T18 + longTermStats.scoring.throws.T17
+  statBox[4].innerText = longTermStats.scoring.throws.D20
+  statBox[5].innerText = longTermStats.scoring.throws.D16
+  statBox[6].innerText = longTermStats.scoring.throws.BULL
+  statBox[7].innerText = longTermStats.basic.totalVisits
+  statBox[8].innerText = longTermStats.scoring.visits.v180
+  statBox[9].innerText = longTermStats.scoring.visits.v171
+  statBox[10].innerText = longTermStats.scoring.visits.v131
+  statBox[11].innerText = longTermStats.scoring.visits.v91
 }
 
 function drawDartMarker(x,y,current=false) {
@@ -325,5 +326,4 @@ export function update(session) {
   updateSessionStatsUI(session);
   lastThreeThrows(session);
   if (gameState.isGame) updateGameScore(session);
-
 }

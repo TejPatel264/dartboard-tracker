@@ -1,35 +1,49 @@
 
 export function calculateLongTermStats(sessions) {
     const longTermStats = {
-        totalThrows: 0,
-        totalVisits: 0,
-        average: 0,
-        total180s: 0,
-        total171: 0,
-        total131: 0,
-        total91: 0,
-        totalT20s: 0,
-        totalBigTrebles: 0,
-        totalBulls: 0,
-        totalD20s: 0,
-        totalD16s: 0
+        basic: {
+            totalThrows: 0,
+            totalVisits: 0,
+            average: 0
+        },
+        scoring: {
+            visits: {
+            v180: 0,
+            v171: 0,
+            v131: 0,
+            v91: 0,
+            v51: 0
+            },
+            throws: {
+                T20: 0,
+                T19: 0,
+                T18: 0,
+                T17: 0,
+                D20: 0,
+                D16: 0,
+                BULL: 0
+            }
+        }
     };
 
     sessions.forEach(s => {
-        longTermStats.totalThrows += s.stats.basic.totalThrows;
-        longTermStats.totalVisits += s.stats.basic.totalVisits;
-        longTermStats.total180s += s.stats.scoring.visits.v180;
-        longTermStats.total171 += s.stats.scoring.visits.v171;
-        longTermStats.total131 += s.stats.scoring.visits.v131;
-        longTermStats.total91 += s.stats.scoring.visits.v91;
-        longTermStats.totalT20s += s.stats.scoring.throws.T20;
-        longTermStats.totalBigTrebles += (s.stats.scoring.throws.T19 + s.stats.scoring.throws.T18 + s.stats.scoring.throws.T17)
-        longTermStats.totalBulls += s.stats.scoring.throws.BULL;
-        longTermStats.totalD20s += s.stats.scoring.throws.D20;
-        longTermStats.totalD16s += s.stats.scoring.throws.D16;
+        longTermStats.basic.totalThrows += s.stats.basic.totalThrows;
+        longTermStats.basic.totalVisits += s.stats.basic.totalVisits;
+        longTermStats.scoring.visits.v180 += s.stats.scoring.visits.v180;
+        longTermStats.scoring.visits.v171 += s.stats.scoring.visits.v171;
+        longTermStats.scoring.visits.v131 += s.stats.scoring.visits.v131;
+        longTermStats.scoring.visits.v91 += s.stats.scoring.visits.v91;
+        longTermStats.scoring.visits.v51 += s.stats.scoring.visits.v51;
+        longTermStats.scoring.throws.T20 += s.stats.scoring.throws.T20;
+        longTermStats.scoring.throws.T19 += s.stats.scoring.throws.T19;
+        longTermStats.scoring.throws.T18 += s.stats.scoring.throws.T18;
+        longTermStats.scoring.throws.T17 += s.stats.scoring.throws.T17;
+        longTermStats.scoring.throws.D20 += s.stats.scoring.throws.D20;
+        longTermStats.scoring.throws.D16 += s.stats.scoring.throws.D16;
+        longTermStats.scoring.throws.BULL += s.stats.scoring.throws.BULL;
     })
 
-    longTermStats.average = longTermStats.totalThrows ? (sessions.reduce((sum,s) => sum + s.stats.basic.average * s.stats.basic.totalThrows, 0)/(longTermStats.totalThrows)).toFixed(2) : 0
+    longTermStats.basic.average = longTermStats.basic.totalThrows ? (sessions.reduce((sum,s) => sum + s.stats.basic.average * s.stats.basic.totalThrows, 0)/(longTermStats.basic.totalThrows)).toFixed(2) : 0
 
     return longTermStats;
 }

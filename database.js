@@ -41,7 +41,8 @@ export function createSession() {
         v180: 0,
         v171: 0,
         v131: 0,
-        v91: 0
+        v91: 0,
+        v51: 0
       }},
       checkout: {
         attempts: 0,

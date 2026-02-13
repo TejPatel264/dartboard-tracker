@@ -6,21 +6,26 @@ import { init, update } from "./logic.js";
 import { getDartThrow, handleDartThrow } from "./logic.js";
 import { calculateLongTermStats } from "./stats.js"
 import { showAllTimeStats } from "./logic.js"
+import { chartStyles, createBarChart, updateBarChart } from "./charts.js";
 
 let {canvas,} = appState;
 let session
 let longTermStats;
+let throwGraph;
+let visitGraph;
 let allSessions = await database.sessions.toArray()
 
 const page = document.getElementById("pages");
 const subtitle = document.getElementById("subtitle");
 const slider = document.querySelector(".slider")
+const throwGraphCanvas = document.getElementById("throw-graph").getContext("2d");
+const visitGraphCanvas = document.getElementById("visit-graph").getContext("2d");
 
-for (let session of allSessions) {
-  session.stats.basic.totalVisits = session.raw.visits.length;
-  database.sessions.put(session);
-}
+//for (let session of allSessions) {}
 
+await database.sessions.filter(s => s.raw.throws.length == 0).delete()
+
+chartStyles()
 
 // THROW TRACKER
 
@@ -29,6 +34,7 @@ canvas.addEventListener("click", (e) => {
   const dart = getDartThrow(e);
   handleDartThrow(dart, session);
   update(session);
+  session.meta.duration = Date.now() - session.meta.date;
   database.sessions.put(session);
 });
 
@@ -65,11 +71,15 @@ btn.newLeg.addEventListener("click", () => {
 
 btn.sessionStats.addEventListener("click", () => {
   slider.style.transform = "translateX(0%)";
+  updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
+  updateBarChart(visitGraph, ["180","171+","131+","91+","51+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
   update(session);
 })
 
 btn.allTimeStats.addEventListener("click", () => {
   slider.style.transform = "translateX(100%)";
+  updateBarChart(throwGraph, Object.keys(longTermStats.scoring.throws), Object.values(longTermStats.scoring.throws), longTermStats.basic.totalThrows);
+  updateBarChart(visitGraph, ["180","171+","131+","91+","51+"], Object.values(longTermStats.scoring.visits), longTermStats.basic.totalVisits);
   showAllTimeStats(longTermStats);
 })
 
@@ -78,7 +88,9 @@ btn.allTimeStats.addEventListener("click", () => {
 document.getElementById("practice").addEventListener("click", () => {
   gameState.leg = null;
   session = createSession();
-  database.sessions.add(session)
+  database.sessions.add(session);
+  throwGraph = createBarChart(throwGraphCanvas, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws));
+  visitGraph = createBarChart(visitGraphCanvas, ["180","171+","131+","91+","51+"], Object.values(session.stats.scoring.visits));  
   init(session);
   subtitle.innerText = "Practice Mode";
   page.style.transform = "translateX(-100vw)";
@@ -87,7 +99,9 @@ document.getElementById("practice").addEventListener("click", () => {
 document.getElementById("game").addEventListener("click", () => {
   gameState.isGame = true;
   session = createSession();
-  database.sessions.add(session)
+  database.sessions.add(session);
+  throwGraph = createBarChart(throwGraphCanvas, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws));
+  visitGraph = createBarChart(visitGraphCanvas, ["180","171+","131+","91+","51+"], Object.values(session.stats.scoring.visits));
   init(session);
   subtitle.innerText = "Game Mode";
   page.style.transform = "translateX(-100vw)";
@@ -99,6 +113,8 @@ document.getElementById("home-page").addEventListener("click", () => {
 })
 
 document.getElementById("view-stats").addEventListener("click", async () => {
+  updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
+  updateBarChart(visitGraph, ["180","171+","131+","91+","51+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
   slider.style.transform = "translateX(0%)";
   update(session);
   page.style.transform = "translateX(-200vw)";
