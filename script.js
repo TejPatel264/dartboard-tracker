@@ -4,9 +4,10 @@ import { database, createSession } from "./database.js"
 import { appState, gameState} from "./states.js";
 import { init, update } from "./logic.js";
 import { getDartThrow, handleDartThrow } from "./logic.js";
-import { calculateLongTermStats } from "./stats.js"
-import { showAllTimeStats } from "./logic.js"
-import { chartStyles, createBarChart, updateBarChart } from "./charts.js";
+import { calculateLongTermStats } from "./stats.js";
+import { showQuickViewStats, showAllTimeStats } from "./logic.js";
+import { chartStyles, createBarChart, updateBarChart, createHeatmap } from "./charts.js";
+import { showSummaryStats, showScoringStats, toTracker } from "./statsviews.js";
 
 let {canvas,} = appState;
 let session
@@ -18,14 +19,24 @@ let allSessions = await database.sessions.toArray()
 const page = document.getElementById("pages");
 const subtitle = document.getElementById("subtitle");
 const slider = document.querySelector(".slider")
+const trackerPage = document.getElementById("tracker");
 const throwGraphCanvas = document.getElementById("throw-graph").getContext("2d");
 const visitGraphCanvas = document.getElementById("visit-graph").getContext("2d");
+const dartboardCanvas = document.querySelector(".dartboard-heatmap")
+const dartMarkerCanvas = document.querySelector(".dartmarkers")
+const heatmapCanvas = document.getElementById("all-time-heatmap")
+const allCanvas = document.querySelectorAll("canvas")
+const viewStatsSelect = document.getElementById("view-stats-select")
 
-//for (let session of allSessions) {}
+//for (let session of allSessions) {database.sessions.put(session)}
 
 await database.sessions.filter(s => s.raw.throws.length == 0).delete()
+session = createSession();
+database.sessions.add(session);
 
 chartStyles()
+throwGraph = createBarChart(throwGraphCanvas, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws));
+visitGraph = createBarChart(visitGraphCanvas, ["180","171+","131+","91+","51+"], Object.values(session.stats.scoring.visits)); 
 
 // THROW TRACKER
 
@@ -85,43 +96,82 @@ btn.allTimeStats.addEventListener("click", () => {
 
 // PAGE SWITCH BUTTON - event listeners
 
-document.getElementById("practice").addEventListener("click", () => {
+btn.toPracticeMode.addEventListener("click", () => {
   gameState.leg = null;
   session = createSession();
   database.sessions.add(session);
-  throwGraph = createBarChart(throwGraphCanvas, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws));
-  visitGraph = createBarChart(visitGraphCanvas, ["180","171+","131+","91+","51+"], Object.values(session.stats.scoring.visits));  
   init(session);
   subtitle.innerText = "Practice Mode";
   page.style.transform = "translateX(-100vw)";
 })
 
-document.getElementById("game").addEventListener("click", () => {
+btn.toGameMode.addEventListener("click", () => {
   gameState.isGame = true;
   session = createSession();
   database.sessions.add(session);
-  throwGraph = createBarChart(throwGraphCanvas, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws));
-  visitGraph = createBarChart(visitGraphCanvas, ["180","171+","131+","91+","51+"], Object.values(session.stats.scoring.visits));
   init(session);
   subtitle.innerText = "Game Mode";
   page.style.transform = "translateX(-100vw)";
 })
 
-document.getElementById("home-page").addEventListener("click", () => {
+btn.backToHomeFromTracker.addEventListener("click", () => {
   page.style.transform = "translateX(0vw)";
   gameState.isGame = false;
+  page.addEventListener("transitionend", () => {
+    allCanvas.forEach(c => {
+    let ctx = c.getContext("2d")
+    ctx.clearRect(0,0,c.width,c.height)
+    if (throwGraph) throwGraph.destroy();
+    if (visitGraph) visitGraph.destroy();
+  })}, {once: true}
+)
 })
 
-document.getElementById("view-stats").addEventListener("click", async () => {
+btn.toStats.addEventListener("click", async () => {
+  document.getElementById("view-scoring").toggleAttribute("show")
   updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","131+","91+","51+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
   slider.style.transform = "translateX(0%)";
   update(session);
   page.style.transform = "translateX(-200vw)";
+  viewStatsSelect.style.opacity = 1;
   allSessions = await database.sessions.toArray();
   longTermStats = calculateLongTermStats(allSessions);
 })
 
-document.getElementById("back-to-tracker").addEventListener("click", () => {
-  page.style.transform = "translateX(-100vw)";
+btn.toQuickStats.addEventListener("click", async () => {
+  allSessions = await database.sessions.toArray();
+  longTermStats = calculateLongTermStats(allSessions);
+  showQuickViewStats(longTermStats, allSessions);
+  trackerPage.style.opacity = 0;
+  btn.backToTracker.toggleAttribute("hidden");
+  showSummaryStats()
+  page.style.transition = "transform 1s cubic-bezier(0.4, 1, 0.3, 1)"
+  page.style.transform = "translateX(-200vw)";
+  viewStatsSelect.style.opacity = 1;
+  createHeatmap(dartboardCanvas,dartMarkerCanvas,heatmapCanvas, allSessions);
+})
+
+btn.backToTracker.addEventListener("click", () => {
+  toTracker();
+})
+
+btn.backToHomeFromStats.addEventListener("click", () => {
+  page.style.transform = "translateX(0vw)";
+  page.addEventListener("transitionend", () => {
+    trackerPage.style.opacity = 1;
+    document.querySelectorAll(".stat-view").forEach(view => view.removeAttribute("show"));
+    if (throwGraph) throwGraph.destroy();
+    if (visitGraph) visitGraph.destroy();
+    btn.backToTracker.toggleAttribute("hidden");
+    page.style.transition = "transform 0.7s cubic-bezier(0.3,0.2,0.2,1)"
+  }, {once: true});
+})
+
+btn.viewQuickStats.addEventListener("click", () => {
+  showSummaryStats()
+})
+
+btn.viewScoringStats.addEventListener("click", () => {
+  showScoringStats()
 })

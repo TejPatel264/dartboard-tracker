@@ -17,7 +17,7 @@ body {
     display: flex;
     width: 300vw;
     height: 100vh;
-    transition: transform 1s ease-in-out;
+    transition: transform 0.7s cubic-bezier(0.3,0.2,0.2,1), opacity 0.5s ease-in-out;
     background-color: #ccc;
 }
 
@@ -30,6 +30,24 @@ section {
     justify-content: center;
     flex-direction: column;
 }
+
+.stat-view {
+    display: none;
+    width: 100%;
+    height: 100%;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+#stats-page {
+    display: flex;
+    width: 100vw;
+    height: 90vh;
+    flex-direction: row;
+}
+
 
 #home p {
     font-size: smaller;
@@ -82,7 +100,7 @@ h2 {
 }
 
 #stats h2 {
-    margin: 20px;
+    margin: 10px;
 }
 
 .stat-box {
@@ -102,6 +120,10 @@ h2 {
     font-weight: bold;
     font-size: small;
     background-color: #7c1f25;
+}
+
+#quick-view .stat{
+    background-color: #333;
 }
 
 .stats-names {
@@ -160,11 +182,29 @@ button:hover {
 }
  
 .buttons {
+    height: 5vw;
+}
+
+#tracker .buttons {
     margin-right: 100px;
 }
 
 .buttons button {
     width: 150px;
+}
+
+.heatmap-container {
+    position: relative;
+    width: 500px;
+    height: 500px;
+}
+
+.heatmap-container canvas {
+    position:absolute;
+    top: 0;
+    left: 0;
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
 }
 
 .pill {
@@ -195,4 +235,8 @@ button:hover {
     width: 200px;
     border-radius: inherit;
     border: 0px;
+}
+
+div[show] {
+    display: flex;
 }

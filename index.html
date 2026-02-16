@@ -14,6 +14,8 @@
     <p>Throw darts and have fun!</p>
     <button id="game" class="switch-page">Game</button>
     <p>A race to 501!</p>
+    <button id="quick-stats" class="switch-page">Summary Stats</button>
+    <p>A quick view of your all time stats!</p>
   </section>
   <section id="tracker">
   <div id="instructions">
@@ -34,17 +36,50 @@
     <button id="delete-last-throw" class="manage-throw">Delete Last Throw</button>
     <button id="new-leg" class="manage-throw" hidden>New Leg</button>
   </div>
-  <div class="buttons">
+  <aside class="buttons">
     <button id="home-page" class="switch-page">&lt; Home Page</button>
     <button id="view-stats" class="switch-page">View More Stats &gt;</button>
-  </div>
+  </aside>
   </section>
   <section id="stats">
-    <h2>Your Stats</h2>
+    <div id="stats-page">
+    <div class="stat-view" id="view-quick">
+      <div class="stats-names">
+        <div class="stat">Throws</div>
+        <div class="stat">Average</div>
+        <div class="stat">Checkout %</div>
+      </div>
+      <div class="stats-numbers">
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+      </div>
+      <div>
+        <div class="heatmap-container">
+        <canvas class="dartboard-heatmap" width="500" height="500"></canvas>
+        <canvas class="dartmarkers" width="500" height="500"></canvas>
+        <canvas class="heatmap" id="all-time-heatmap" width="500" height="500"></canvas>
+        </div>
+      </div>
+      <div class="stats-names">
+        <div class="stat">Best Average</div>
+        <div class="stat">Best Checkout %</div>
+        <div class="stat">Highest Checkout</div>
+        <div class="stat">Quickest Leg</div>
+      </div>
+      <div class="stats-numbers">
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+      </div>
+    </div>
+    <div class="stat-view" id="view-scoring">
+    <h2>Your Scoring Stats</h2>
     <div class="pill">
-    <div class="slider"></div>
-    <button id="session-stats" class="switch-stats">Session</button>
-    <button id="all-time-stats" class="switch-stats">All Time</button>
+      <div class="slider"></div>
+      <button id="session-stats" class="switch-stats">Session</button>
+      <button id="all-time-stats" class="switch-stats">All Time</button>
     </div>
     <div style="display: flex; flex-direction: column; gap: 0px;">
       <div class="stats-names">
@@ -86,8 +121,20 @@
       </div>
       <canvas id="visit-graph" width="500" height="150"></canvas>
     </div>
-    <button id="back-to-tracker" class="switch-page">&lt; Back To Tracker</button>
+    </div>
+    <aside id="view-stats-select" style="position: absolute; opacity:0; right: 0; top: 0; display: flex; flex-direction: column; gap: 10px;">
+      <button id="btn-quick">Summary</button>
+      <button id="btn-scoring">Scoring</button>
+      <button id="btn-doubling">Doubling</button>
+    </aside>
+    </div>
+    <aside class="buttons">
+      <button id="back-to-home" class="switch-page">&lt;&lt; Home</button>
+      <button id="back-to-tracker" class="switch-page">&lt; Back To Tracker</button>
+    </aside>
   </section>
+  </div>
+  </div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="script.js"></script>
 </body>

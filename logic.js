@@ -240,7 +240,7 @@ function updateSessionStatsUI(session) {
   
   drawStats()
 
-  const statBox = document.querySelectorAll(".stat-box")
+  const statBox = document.querySelectorAll("#view-scoring .stat-box")
   statBox[0].innerText = totalThrows
   statBox[1].innerText = average
   statBox[2].innerText = session.stats.scoring.throws.T20
@@ -256,7 +256,7 @@ function updateSessionStatsUI(session) {
 }
 
 export function showAllTimeStats(longTermStats) {
-  const statBox = document.querySelectorAll(".stat-box")
+  const statBox = document.querySelectorAll("#view-scoring .stat-box")
   statBox[0].innerText = longTermStats.basic.totalThrows
   statBox[1].innerText = longTermStats.basic.average
   statBox[2].innerText = longTermStats.scoring.throws.T20
@@ -269,6 +269,23 @@ export function showAllTimeStats(longTermStats) {
   statBox[9].innerText = longTermStats.scoring.visits.v171
   statBox[10].innerText = longTermStats.scoring.visits.v131
   statBox[11].innerText = longTermStats.scoring.visits.v91
+}
+
+export function showQuickViewStats(longTermStats, allSessions) {
+  const statBox = document.querySelectorAll("#view-quick .stat-box")
+  statBox[0].innerText = longTermStats.basic.totalThrows
+  statBox[1].innerText = longTermStats.basic.average
+  statBox[2].innerText = "0%"
+  
+  let bestAverage = 0
+  for (let session of allSessions) {
+    if (Number(session.stats.basic.average) > bestAverage && Number(session.stats.basic.average) < 180) bestAverage = session.stats.basic.average
+  }
+
+  statBox[3].innerText = bestAverage
+  statBox[4].innerText = "1%"
+  statBox[5].innerText = 2
+  statBox[6].innerText = 100
 }
 
 function drawDartMarker(x,y,current=false) {
