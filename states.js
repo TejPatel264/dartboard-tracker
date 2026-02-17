@@ -9,11 +9,13 @@ export let appState = {
   ctx,
   width,
   height,
-  center
+  center,
+  page: "home"
 };
 
 export let gameState = {
     isPaused: false,
     isGame: false,
-    leg: null
+    leg: null,
+    scoreRemaining: 501
 };

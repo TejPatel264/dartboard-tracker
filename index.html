@@ -11,7 +11,7 @@
   <section id="home">
     <h1>Darts Tracker</h1>
     <button id="practice" class="switch-page">Practice</button>
-    <p>Throw darts and have fun!</p>
+    <p>(coming soon)</p>
     <button id="game" class="switch-page">Game</button>
     <p>A race to 501!</p>
     <button id="quick-stats" class="switch-page">Summary Stats</button>
@@ -84,18 +84,20 @@
     <div style="display: flex; flex-direction: column; gap: 0px;">
       <div class="stats-names">
         <div class="stat">Throws</div>
+        <div class="stat">Visits</div>
         <div class="stat">Average</div>
       </div>
       <div class="stats-numbers">
         <div class="stat-box">0</div>
         <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
       </div>
       <div class="stats-names">
         <div class="stat">T20</div>
-        <div class="stat">T19/T18/T17</div>
-        <div class="stat">D20</div>
-        <div class="stat">D16</div>
-        <div class="stat">BULL</div>
+        <div class="stat">T19</div>
+        <div class="stat">T18</div>
+        <div class="stat">T17</div>
+        <div class="stat">T16</div>
       </div>
       <div class="stats-numbers">
         <div class="stat-box">0</div>
@@ -106,11 +108,11 @@
       </div>
       <canvas id="throw-graph" width="500" height="150"></canvas>
       <div class="stats-names">
-        <div class="stat">Visits</div>
         <div class="stat">180</div>
         <div class="stat">171+</div>
-        <div class="stat">131+</div>
-        <div class="stat">91+</div>
+        <div class="stat">133+</div>
+        <div class="stat">95+</div>
+        <div class="stat">57+</div>
       </div>
       <div class="stats-numbers">
         <div class="stat-box">0</div>
@@ -122,7 +124,7 @@
       <canvas id="visit-graph" width="500" height="150"></canvas>
     </div>
     </div>
-    <aside id="view-stats-select" style="position: absolute; opacity:0; right: 0; top: 0; display: flex; flex-direction: column; gap: 10px;">
+    <aside id="view-stats-select" style="position: absolute; right: 0; top: 0; display: none; flex-direction: column; gap: 10px;">
       <button id="btn-quick">Summary</button>
       <button id="btn-scoring">Scoring</button>
       <button id="btn-doubling">Doubling</button>

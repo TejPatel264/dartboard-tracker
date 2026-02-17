@@ -2,7 +2,8 @@ export function chartStyles() {
     Chart.defaults.font.family = 'monospace';
 }
 
-export function createBarChart(ctx,x,y) {
+export function createBarChart(canvas,x,y) {
+    let ctx = canvas.getContext("2d")
     return new Chart (ctx, {
         type: "bar",
         data: {
@@ -204,23 +205,23 @@ function drawHeatmap(canvas, sessions) {
     throws = [].concat(...throws)
 
     for (let t of throws.filter(t => t.x != null)) {
-        const alpha = Math.min((0.8, 3*16/throws.length))
-        const g = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, 16);
+        const alpha = Math.min(0.4, 3*16/throws.length);
+        const g = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, 8);
         g.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
-        g.addColorStop(0.4, `rgba(255,255,255,${alpha*0.6}`)
+        g.addColorStop(0.4, `rgba(255,255,255,${alpha*0.6})`);
         g.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = g;
-        ctx.fillRect(t.x-16,t.y-16,32,32)
+        ctx.fillRect(t.x-8,t.y-8,16,16)
     }
 
     const img = ctx.getImageData(0, 0, width, height);
     const data = img.data;
 
     function colourGradient(a) {
-        a = Math.pow(a,0.6)
+        a = Math.pow(a,0.5)
 
-        if (a < 0.10) return [30,60,80];
-        else if (a < 0.50) return [46,204,113];
+        if (a < 0.20) return [30,60,80];
+        else if (a < 0.60) return [46,204,113];
         else if (a < 0.80) return [241,196,15];
         else if (a < 0.95) return [231,76,60];
         else return [255,255,255]

@@ -1,3 +1,6 @@
+const page = document.getElementById("pages");
+const trackerPage = document.getElementById("tracker");
+
 export function showSummaryStats() {
   if (document.getElementById("view-quick").hasAttribute("show")) return;
   document.querySelectorAll(".stat-view").forEach(view => view.removeAttribute("show"));
