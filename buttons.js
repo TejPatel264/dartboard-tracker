@@ -14,7 +14,9 @@ const backToTracker = document.getElementById("back-to-tracker")
 const backToHomeFromStats = document.getElementById("back-to-home")
 
 const viewQuickStats = document.getElementById("btn-quick")
+const viewSessionStats = document.getElementById("btn-session")
 const viewScoringStats = document.getElementById("btn-scoring")
+const viewDoublingStats = document.getElementById("btn-doubling")
 
 export const btn = {
     toPracticeMode,
@@ -30,5 +32,7 @@ export const btn = {
     backToTracker,
     backToHomeFromStats,
     viewQuickStats,
-    viewScoringStats
+    viewSessionStats,
+    viewScoringStats,
+    viewDoublingStats
 }

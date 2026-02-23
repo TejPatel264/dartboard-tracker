@@ -62,3 +62,37 @@ export function calculateLongTermStats(sessions) {
 
     return longTermStats;
 }
+
+
+function createSessionCard(session) {
+    const div = document.createElement("div")
+    div.className = "session-card"
+
+    const date = new Date(session.meta.date).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+    })
+
+    div.innerHTML = `
+    <div class="session-date">${date} - ${Math.round(session.meta.duration/60)} mins</div>
+    <div class="session-stats">
+    Avg: ${Number(session.stats.basic.average).toFixed(1)} | 
+    CO: ${session.stats.checkout.percentage}% | 
+    HC: ${session.stats.checkout.highest}
+    </div>`
+
+    return div
+}
+
+
+export async function loadSessionTimeline(db) {
+    const sessions = await db.sessions.orderBy("meta.date").reverse().toArray()
+    const container = document.getElementById("view-session-timeline")
+
+    container.innerHTML = "<h2>Your Session Timeline</h2>"
+    
+    if (!sessions.length) {container.innerHTML = "<h2>No sessions yet</h2>"; return;}
+
+    for (let s of sessions) container.appendChild(createSessionCard(s));
+}

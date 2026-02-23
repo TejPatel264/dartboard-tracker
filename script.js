@@ -1,19 +1,20 @@
 
 import { btn } from "./buttons.js"
-import { database, createSession } from "./database.js"
+import { database, createPlayer, createSession } from "./database.js"
 import { appState, gameState} from "./states.js";
 import { init, update } from "./logic.js";
 import { getDartThrow, handleDartThrow } from "./logic.js";
 import { calculateLongTermStats } from "./stats.js";
-import { showQuickViewStats, showAllTimeStats } from "./logic.js";
-import { chartStyles, createBarChart, updateBarChart, createHeatmap } from "./charts.js";
-import { showSummaryStats, showScoringStats, toTracker } from "./statsviews.js";
+import { showQuickViewStats, showAllTimeStats, showSessionStats } from "./logic.js";
+import { chartStyles, createBarChart, updateBarChart, createHeatmap, createLineChart, updateLineChart } from "./charts.js";
+import { showSummaryStats, showSessionStatView, showScoringStats, toTracker } from "./statsviews.js";
 
 let {canvas,} = appState;
 let session
 let longTermStats;
 let throwGraph;
 let visitGraph;
+let sessionTimeline;
 let allSessions = await database.sessions.toArray()
 
 const page = document.getElementById("pages");
@@ -22,13 +23,17 @@ const slider = document.querySelector(".slider")
 const trackerPage = document.getElementById("tracker");
 const throwGraphCanvas = document.getElementById("throw-graph");
 const visitGraphCanvas = document.getElementById("visit-graph");
-const dartboardCanvas = document.querySelector(".dartboard-heatmap");
-const dartMarkerCanvas = document.querySelector(".dartmarkers");
-const heatmapCanvas = document.getElementById("all-time-heatmap");
+const dartboardCanvas = document.querySelectorAll(".dartboard-heatmap");
+const dartMarkerCanvas = document.querySelectorAll(".dartmarkers");
+const heatmapCanvas = document.querySelectorAll(".heatmap");
 const allCanvas = document.querySelectorAll("canvas");
 const viewStatsSelect = document.getElementById("view-stats-select");
+const summaryTitle = document.querySelector("#view-quick h2");
 
 //for (let session of allSessions) {database.sessions.put(session)}
+createPlayer()
+const player = await database.player.get("local");
+if (player) summaryTitle.innerText = `${player.name}'s Stats`;
 
 await database.sessions.filter(s => s.raw.throws.length <= 3).delete();
 
@@ -72,15 +77,20 @@ btn.newLeg.addEventListener("click", () => {
   gameState.leg++;
   gameState.scoreRemaining = 501;
   update(session);
+  database.sessions.put(session);
   gameState.isPaused = false;
   canvas.style.cursor = "crosshair";
   btn.newLeg.toggleAttribute("hidden");
+  btn.toStats.toggleAttribute("hidden");
 })
+
+// STATS TYPE - event listeners
 
 btn.sessionStats.addEventListener("click", () => {
   slider.style.transform = "translateX(0%)";
   updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
+  update(session)
 })
 
 btn.allTimeStats.addEventListener("click", () => {
@@ -99,16 +109,23 @@ btn.toPracticeMode.addEventListener("click", () => {
   page.style.transform = "translateX(-100vw)";
 })
 
-btn.toGameMode.addEventListener("click", () => {
+btn.toGameMode.addEventListener("click", async () => {
   appState.page = "tracker";
   gameState.leg = 1;
   gameState.isGame = true;
+  gameState.isPaused = false;
+  gameState.scoreRemaining = 501;
+  canvas.style.cursor = "crosshair";
   trackerPage.style.opacity = 1;
   session = createSession();
   database.sessions.add(session);
+  session.meta.gameType = "501";
+  session.meta.format = "game-single";
+  database.sessions.put(session);
   init(session);
   throwGraph = createBarChart(throwGraphCanvas, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws));
   visitGraph = createBarChart(visitGraphCanvas, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits)); 
+  //sessionTimeline = createLineChart(document.getElementById("session-timeline"), session.raw.throws.map((_,i) => i), session.raw.throws.map(t => t.score));
   subtitle.innerText = "Game Mode";
   page.style.transform = "translateX(-100vw)";
   
@@ -129,29 +146,33 @@ btn.backToHomeFromTracker.addEventListener("click", () => {
 })
 
 btn.toStats.addEventListener("click", async () => {
+  if (!gameState.isPaused) return;
+  showSessionStatView();
+  showSessionStats(session);
   appState.page = "stats";
-  showScoringStats();
   updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
+  //updateLineChart(sessionTimeline, session.raw.throws.map((_,i) => i), session.raw.throws.map(t => t.score));
   slider.style.transform = "translateX(0%)";
   page.style.transform = "translateX(-200vw)";
   viewStatsSelect.style.display = "flex";
   allSessions = await database.sessions.toArray();
   longTermStats = calculateLongTermStats(allSessions);
+  createHeatmap(dartboardCanvas[1],dartMarkerCanvas[1],heatmapCanvas[1], [session], false);
 })
 
 btn.toQuickStats.addEventListener("click", async () => {
-  appState.page = "stats";
   allSessions = await database.sessions.toArray();
   longTermStats = calculateLongTermStats(allSessions);
   showQuickViewStats(longTermStats);
   trackerPage.style.opacity = 0;
   btn.backToTracker.toggleAttribute("hidden");
   showSummaryStats();
+  appState.page = "stats";
   page.style.transition = "transform 1s cubic-bezier(0.4, 1, 0.3, 1)"
   page.style.transform = "translateX(-200vw)";
   viewStatsSelect.style.display = "none";
-  createHeatmap(dartboardCanvas,dartMarkerCanvas,heatmapCanvas, allSessions);
+  createHeatmap(dartboardCanvas[0],dartMarkerCanvas[0],heatmapCanvas[0], allSessions);
 })
 
 btn.backToTracker.addEventListener("click", () => {
@@ -173,16 +194,23 @@ btn.backToHomeFromStats.addEventListener("click", () => {
     btn.backToTracker.removeAttribute("hidden");
     page.style.transition = "transform 0.7s cubic-bezier(0.3,0.2,0.2,1)"
   }, {once: true});
-})
+});
+
+// STATS VIEWS - event listeners
 
 btn.viewQuickStats.addEventListener("click", async () => {
   showSummaryStats();
   allSessions = await database.sessions.toArray();
   longTermStats = calculateLongTermStats(allSessions);
   showQuickViewStats(longTermStats);
-  createHeatmap(dartboardCanvas,dartMarkerCanvas,heatmapCanvas, allSessions);
-})
+  createHeatmap(dartboardCanvas[0],dartMarkerCanvas[0],heatmapCanvas[0], allSessions);
+});
+
+btn.viewSessionStats.addEventListener("click", async () => {
+  await showSessionStatView();
+  createHeatmap(dartboardCanvas[1],dartMarkerCanvas[1],heatmapCanvas[1], [session], false);
+});
 
 btn.viewScoringStats.addEventListener("click", () => {
   showScoringStats();
-})
+});

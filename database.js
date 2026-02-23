@@ -3,15 +3,31 @@ import Dexie from "https://unpkg.com/dexie@latest/dist/dexie.mjs";
 export const database = new Dexie("dartStats")
 
 database.version(1).stores({
+    player: "id, name",
     sessions: "++id, meta.date"
 })
+
+export async function createPlayer() {
+  const count = await database.player.count();
+
+  if (count === 0) {
+    const name = prompt("Enter your name:") || "Player";
+
+    await database.player.put({
+      id: "local",
+      name,
+      created: Date.now(),
+      lifetimeStats: null
+    });
+  }
+}
+
 
 export function createSession() {
   return {
     meta: {
       date: Date.now(),
       duration: 0,
-      player: "",
       format: "practice",
       gameType: "none"
     },

@@ -36,14 +36,15 @@
     <button id="delete-last-throw" class="manage-throw">Delete Last Throw</button>
     <button id="new-leg" class="manage-throw" hidden>New Leg</button>
   </div>
-  <aside class="buttons">
+  <aside id="tracker-buttons" class="buttons">
     <button id="home-page" class="switch-page">&lt; Home Page</button>
-    <button id="view-stats" class="switch-page">View More Stats &gt;</button>
+    <button id="view-stats" class="switch-page" hidden>View More Stats &gt;</button>
   </aside>
   </section>
   <section id="stats">
     <div id="stats-page">
     <div class="stat-view" id="view-quick">
+      <h2></h2>
       <div class="stats-names">
         <div class="stat">Throws</div>
         <div class="stat">Average</div>
@@ -69,6 +70,28 @@
       </div>
       <div class="stats-numbers">
         <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+      </div>
+    </div>
+    <div class="stat-view" id="view-session">
+      <h2>Your Session Summary</h2>
+      <div height="500" width="100%" display="flex" flex-direction="row" gap="0px">
+      <div>
+        <div class="heatmap-container">
+        <canvas class="dartboard-heatmap" width="500" height="500"></canvas>
+        <canvas class="dartmarkers" width="500" height="500"></canvas>
+        <canvas class="heatmap" id="session-heatmap" width="500" height="500"></canvas>
+        </div>
+      </div>
+      </div>
+      <div class="stats-names">
+        <div class="stat">Throws</div>
+        <div class="stat">Average</div>
+        <div class="stat">Checkout %</div>
+      </div>
+      <div class="stats-numbers">
         <div class="stat-box">0</div>
         <div class="stat-box">0</div>
         <div class="stat-box">0</div>
@@ -125,7 +148,8 @@
     </div>
     </div>
     <aside id="view-stats-select" style="position: absolute; right: 0; top: 0; display: none; flex-direction: column; gap: 10px;">
-      <button id="btn-quick">Summary</button>
+      <button id="btn-quick">All Time</button>
+      <button id="btn-session">Session</button>
       <button id="btn-scoring">Scoring</button>
       <button id="btn-doubling">Doubling</button>
     </aside>

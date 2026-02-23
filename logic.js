@@ -169,7 +169,8 @@ export function updateGameScore(session) {
       ctx.lineTo(310,260);
       ctx.stroke();
 
-      btn.newLeg.toggleAttribute("hidden");
+      btn.newLeg.removeAttribute("hidden");
+      btn.toStats.removeAttribute("hidden");
     }, 1000);
   }
   if (gameState.scoreRemaining < 0 || gameState.scoreRemaining == 1 || (gameState.scoreRemaining == 0 && !isValidCheckout)) {
@@ -304,6 +305,13 @@ export function showQuickViewStats(longTermStats) {
   statBox[4].innerText = longTermStats.milestone.bestPercentage + "%"
   statBox[5].innerText = longTermStats.checkout.highest
   statBox[6].innerText = longTermStats.milestone.shortestLeg + " throws"
+}
+
+export function showSessionStats(session) {
+  const statBox = document.querySelectorAll("#view-session .stat-box")
+  const s = session.stats
+  const stats = [s.basic.totalThrows,s.basic.average,s.checkout.percentage + "%"] 
+  statBox.forEach((box, i) => box.innerText = stats[i])
 }
 
 function drawDartMarker(x,y,current=false) {
