@@ -8,6 +8,7 @@
 <body>
   <div id="viewport">
   <div id="pages">
+  
   <section id="home">
     <h1>Darts Tracker</h1>
     <button id="practice" class="switch-page">Practice</button>
@@ -17,6 +18,7 @@
     <button id="quick-stats" class="switch-page">Summary Stats</button>
     <p>A quick view of your all time stats!</p>
   </section>
+  
   <section id="tracker">
   <div id="instructions">
     <h2 id="subtitle"></h2>
@@ -41,10 +43,18 @@
     <button id="view-stats" class="switch-page" hidden>View More Stats &gt;</button>
   </aside>
   </section>
+  
   <section id="stats">
+    <h2>Your Stats</h2>
+      <div hidden class="pill">
+      <div class="slider"></div>
+      <button id="session-stats" class="switch-stats">Session</button>
+      <button id="all-time-stats" class="switch-stats">All Time</button>
+      </div>
+    
     <div id="stats-page">
+    
     <div class="stat-view" id="view-quick">
-      <h2></h2>
       <div class="stats-names">
         <div class="stat">Throws</div>
         <div class="stat">Average</div>
@@ -75,8 +85,8 @@
         <div class="stat-box">0</div>
       </div>
     </div>
+    
     <div class="stat-view" id="view-session">
-      <h2>Your Session Summary</h2>
       <div height="500" width="100%" display="flex" flex-direction="row" gap="0px">
       <div>
         <div class="heatmap-container">
@@ -97,58 +107,68 @@
         <div class="stat-box">0</div>
       </div>
     </div>
+    
     <div class="stat-view" id="view-scoring">
-    <h2>Your Scoring Stats</h2>
-    <div class="pill">
-      <div class="slider"></div>
-      <button id="session-stats" class="switch-stats">Session</button>
-      <button id="all-time-stats" class="switch-stats">All Time</button>
-    </div>
-    <div style="display: flex; flex-direction: column; gap: 0px;">
+    <div id="scoring-layout">
       <div class="stats-names">
         <div class="stat">Throws</div>
         <div class="stat">Visits</div>
         <div class="stat">Average</div>
-      </div>
-      <div class="stats-numbers">
-        <div class="stat-box">0</div>
-        <div class="stat-box">0</div>
-        <div class="stat-box">0</div>
-      </div>
-      <div class="stats-names">
-        <div class="stat">T20</div>
-        <div class="stat">T19</div>
-        <div class="stat">T18</div>
-        <div class="stat">T17</div>
-        <div class="stat">T16</div>
+        <div class="stat">Scoring Average</div>
       </div>
       <div class="stats-numbers">
         <div class="stat-box">0</div>
         <div class="stat-box">0</div>
         <div class="stat-box">0</div>
         <div class="stat-box">0</div>
-        <div class="stat-box">0</div>
+      </div class="stat-box">
+      <div id="scoring-dashboard">
+      <div id="scoring-grid">
+        <div id="top-scores-box">
+          🏆 180: <span class="top-scores">99</span>
+          <br><br>🥇 <span class="top-scores">99999</span>
+          <br><br>🥈 <span class="top-scores">99999</span>
+          <br><br>🥉 <span class="top-scores">99999</span>
+        </div>
+      <div id="visit-graph-container" class="graph-wrapper">
+      <canvas id="visit-graph"></canvas></div>
+      <div id="throw-graph-container" class="graph-wrapper">
+        <canvas id="throw-graph"></canvas></div>
       </div>
-      <canvas id="throw-graph" width="500" height="150"></canvas>
-      <div class="stats-names">
-        <div class="stat">180</div>
-        <div class="stat">171+</div>
-        <div class="stat">133+</div>
-        <div class="stat">95+</div>
-        <div class="stat">57+</div>
       </div>
-      <div class="stats-numbers">
-        <div class="stat-box">0</div>
-        <div class="stat-box">0</div>
-        <div class="stat-box">0</div>
-        <div class="stat-box">0</div>
-        <div class="stat-box">0</div>
-      </div>
-      <canvas id="visit-graph" width="500" height="150"></canvas>
     </div>
     </div>
+    
+    <div class="stat-view" id="view-doubling">
+      <div class="stats-names">
+        <div class="stat">Double Attempts</div>
+        <div class="stat">Successful Doubles</div>
+        <div class="stat">Double Success %</div>
+      </div>
+      <div class="stats-numbers">
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+    </div>
+    <div class="stats-names">
+        <div class="stat">First Dart Success</div>
+        <div class="stat">First Visit Success</div>
+        <div class="stat">Second Visit Success</div>
+      </div>
+      <div class="stats-numbers">
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+        <div class="stat-box">0</div>
+      </div>
+    <div id="top-doubles-box">
+          🥇 <span class="top-doubles">99999</span>
+          <br><br>🥈 <span class="top-doubles">99999</span>
+          <br><br>🥉 <span class="top-doubles">99999</span>
+        </div>
+    </div>
+    
     <aside id="view-stats-select" style="position: absolute; right: 0; top: 0; display: none; flex-direction: column; gap: 10px;">
-      <button id="btn-quick">All Time</button>
+      <button id="btn-quick">Summary</button>
       <button id="btn-session">Session</button>
       <button id="btn-scoring">Scoring</button>
       <button id="btn-doubling">Doubling</button>
@@ -159,6 +179,7 @@
       <button id="back-to-tracker" class="switch-page">&lt; Back To Tracker</button>
     </aside>
   </section>
+  
   </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

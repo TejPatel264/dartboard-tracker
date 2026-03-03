@@ -104,10 +104,10 @@ export function handleDartThrow(dart, session) {
   else if (dist > 170) {score = 0; multiplier = 0; segment = 0}
   else {multiplier = 1; segment = score}
 
-  throws.push({x, y, dx, dy, score, multiplier, segment, type:"normal", leg: gameState.leg, scoreRemaining:null, isCheckoutAttempt: false});
+  throws.push({x, y, dx, dy, score, multiplier, segment, type:"normal", throwNo: null, visit: null, leg: gameState.leg, scoreBefore:null, scoreAfter:null, isCheckoutAttempt: false});
 }
 
-export function drawGameScore(num=501, leg=1) {
+function drawGameScore(num=501, leg=1, throwNo=1) {
   ctx.fillStyle = "#111";
   ctx.font = "bold 20px monospace";
   ctx.textAlign = "left";
@@ -117,41 +117,37 @@ export function drawGameScore(num=501, leg=1) {
 
   ctx.textAlign = "right";
   ctx.fillText(`Leg: ${leg}`,498,1);
+  ctx.fillText(`Throw: ${throwNo}`,498,25);
 }
 
-export function updateGameScore(session) {
+function updateGameScore(session) {
 
   const throws = session.raw.throws
   const currentThrow = throws[throws.length-1]
   let currentLeg = t => t.leg == gameState.leg
   let currentLegScores = throws.filter(currentLeg)
+  let thrown = t => t.type != "notThrown"
   
-  if (currentLegScores.length == 0) {drawGameScore(gameState.scoreRemaining); return;}
+  if (currentLegScores.length == 0) {drawGameScore(501, gameState.leg, 0); return;}
 
-  let isValidCheckout = currentThrow.multiplier == 2;
-  if (gameState.scoreRemaining == 50 || (gameState.scoreRemaining <= 40 && gameState.scoreRemaining % 2 == 0)) {
-    currentThrow.isCheckoutAttempt = true;
-    session.stats.checkout.attempts++;
-  }
+  if (currentThrow.type != "notThrown") currentThrow.throwNo = currentLegScores.filter(thrown).length
+  currentThrow.visit = Math.ceil(currentLegScores.length / 3)
 
   gameState.scoreRemaining = 501 - currentLegScores.reduce((sum,t) => sum + t.score, 0);
-  currentThrow.scoreRemaining = gameState.scoreRemaining
-  
-  drawGameScore(gameState.scoreRemaining, gameState.leg);
+  currentThrow.scoreBefore = gameState.scoreRemaining + currentThrow.score;
+  currentThrow.scoreAfter = gameState.scoreRemaining;
 
-  if (currentThrow.isCheckoutAttempt) {
-    if (isValidCheckout) {
-      session.stats.checkout.success++;
-      if (currentThrow.segment in session.stats.checkout.segments) session.stats.checkout.segments[currentThrow.segment]++;
-    }
-    session.stats.checkout.percentage = ((session.stats.checkout.success / session.stats.checkout.attempts) * 100).toFixed(2);
+  let isValidCheckout = currentThrow.multiplier == 2;
+  if ((currentThrow.scoreBefore == 50 && currentLegScores.length % 3 == 0) || (currentThrow.scoreBefore <= 40 && currentThrow.scoreBefore % 2 == 0)) {
+    currentThrow.isCheckoutAttempt = true;
   }
-
   
+  drawGameScore(gameState.scoreRemaining, gameState.leg, currentLegScores.length);
+
   if (gameState.scoreRemaining == 0 && isValidCheckout) {
     gameState.isPaused = true;
     session.stats.basic.throwsPerLeg.push(currentLegScores.length);
-    session.stats.checkout.highest = Math.max(session.stats.checkout.highest, throws[throws.length-(throws.length%3||3)-1].scoreRemaining);
+    session.stats.checkout.highest = Math.max(session.stats.checkout.highest, throws[throws.length-(throws.length%3||3)-1].scoreAfter);
     setTimeout(() => {
       canvas.style.cursor = "default";
       ctx.fillStyle = "rgb(0,0,0,0.75)"
@@ -193,7 +189,7 @@ export function updateGameScore(session) {
       ctx.stroke();
     }, 1000)
     setTimeout(() => {
-      gameState.scoreRemaining = throws[throws.length-(throws.length%3||3)-1].scoreRemaining
+      gameState.scoreRemaining = throws[throws.length-(throws.length%3||3)-1].scoreAfter
       for (let i=0; i<(throws.length%3||3); i++) {
         throws[throws.length - 1 - i].score = 0;
         throws[throws.length - 1 - i].segment = 0;
@@ -201,7 +197,7 @@ export function updateGameScore(session) {
         throws[throws.length - 1 - i].scoreRemaining = gameState.scoreRemaining;
       }
       while (throws.length % 3 != 0) {
-        throws.push({x:null, y:null, dx:null, dy:null, score:null, segment:"-", type:"notThrown", leg:null, scoreRemaining:null, isCheckoutAttempt: null});
+        throws.push({x:null, y:null, dx:null, dy:null, score:null, segment:"-", type:"notThrown", throwNo:null, visit:null, leg:null, scoreBefore:null, scoreAfter:null, isCheckoutAttempt: null});
       }
       update(session);
       gameState.isPaused = false;
@@ -210,16 +206,23 @@ export function updateGameScore(session) {
   }
 }
 
-
-function updateSessionStats(session) {
+export function updateSessionStats(session) {
   const throws = session.raw.throws
   const thrown = t => t.type != "notThrown"
   
   session.stats.basic.totalThrows = throws.filter(thrown).length;
   const totalThrows = session.stats.basic.totalThrows
-  
+
   session.raw.visits.length = 0;
-  session.stats.scoring = {throws:{T20:0, T19:0, T18:0, T17:0, T16:0}, visits:{v180:0, v171:0, v133:0, v95:0, v57:0}}
+  session.stats.scoring = {
+    scoringThrows:0, scoringAverage:0, 
+    throws:{T20:0, T19:0, T18:0, T17:0, T16:0, T15:0, T14:0, T13:0, T12:0, T11:0, T10:0, T9:0, T8:0, T7:0, T6:0, T5:0, T4:0, T3:0, T2:0, T1:0}, 
+    visits:{v180:0, v171:0, v133:0, v95:0, v57:0}}
+
+  const scoringThrows = (t,i) => t.type != "notThrown" && ((t.scoreBefore > 220 && i % 3 == 0) || (t.scoreBefore > 160 && i % 3 == 1) || (t.scoreBefore > 100 && i % 3 == 2));
+  const scoringThrowsCount = throws.filter(scoringThrows).length;
+  session.stats.scoring.scoringThrows = scoringThrowsCount;
+  session.stats.scoring.scoringAverage = scoringThrowsCount > 0 ? (3*(throws.filter(scoringThrows).reduce((sum,t) => sum + t.score, 0) / scoringThrowsCount)).toFixed(2) : 0;
 
   session.stats.basic.average = (3*throws.reduce((sum,t)=>sum+t.score,0)/Math.max(1,totalThrows)).toFixed(2);
   
@@ -243,57 +246,151 @@ function updateSessionStats(session) {
       if (t.segment == i) session.stats.scoring.throws[i]++
     }
   })
+
+  session.stats.checkout.attempts = throws.filter(t => t.isCheckoutAttempt).length
+  session.stats.checkout.success = throws.filter(t => t.scoreAfter == 0).length
+  session.stats.checkout.percentage = ((session.stats.checkout.success / session.stats.checkout.attempts) * 100).toFixed(2);
+
+
+  session.stats.checkout.when.throw1.attempts = 0
+  session.stats.checkout.when.visit1.attempts = 0
+  session.stats.checkout.when.visit2.attempts = 0
+
+  session.stats.checkout.when.throw1.success = 0
+  session.stats.checkout.when.visit1.success = 0
+  session.stats.checkout.when.visit2.success = 0
+
+  const legs = throws.reduce((acc, t) => {
+    (acc[t.leg] ??= []).push(t);
+    return acc;
+  }, {})
+  Object.values(legs).forEach(leg => {
+    const checkoutThrows = leg.filter(t => t.isCheckoutAttempt);
+    if (checkoutThrows[checkoutThrows.length-1]?.scoreAfter != 0) return;
+    session.stats.checkout.when.throw1.attempts++
+    session.stats.checkout.when.visit1.attempts++
+    if (checkoutThrows.length == 1) session.stats.checkout.when.throw1.success++
+    if (checkoutThrows[checkoutThrows.length-1].visit == checkoutThrows[0].visit) session.stats.checkout.when.visit1.success++
+    if (checkoutThrows[checkoutThrows.length-1].visit == checkoutThrows[0].visit+1) {
+      session.stats.checkout.when.visit2.success++;
+      session.stats.checkout.when.visit2.attempts++;
+    }
+    if (checkoutThrows[checkoutThrows.length-1].visit > checkoutThrows[0].visit+1) session.stats.checkout.when.visit2.attempts++;
+  })
+
+  session.stats.checkout.segments = { 
+    D20:{attempts:0, success:0, percentage:0}, 
+    D19:{attempts:0, success:0, percentage:0}, 
+    D18:{attempts:0, success:0, percentage:0}, 
+    D17:{attempts:0, success:0, percentage:0}, 
+    D16:{attempts:0, success:0, percentage:0}, 
+    D15:{attempts:0, success:0, percentage:0}, 
+    D14:{attempts:0, success:0, percentage:0}, 
+    D13:{attempts:0, success:0, percentage:0}, 
+    D12:{attempts:0, success:0, percentage:0}, 
+    D11:{attempts:0, success:0, percentage:0}, 
+    D10:{attempts:0, success:0, percentage:0}, 
+    D9:{attempts:0, success:0, percentage:0}, 
+    D8:{attempts:0, success:0, percentage:0}, 
+    D7:{attempts:0, success:0, percentage:0}, 
+    D6:{attempts:0, success:0, percentage:0}, 
+    D5:{attempts:0, success:0, percentage:0}, 
+    D4:{attempts:0, success:0, percentage:0}, 
+    D3:{attempts:0, success:0, percentage:0},
+    D2:{attempts:0, success:0, percentage:0},
+    D1:{attempts:0, success:0, percentage:0},
+    BULL:{attempts:0, success:0, percentage:0}
+  }
+
+  throws.forEach(t => {
+    if (!t.isCheckoutAttempt) return;
+    if (t.scoreBefore == 50) session.stats.checkout.segments.BULL.attempts++;
+    else session.stats.checkout.segments[`D${t.scoreBefore/2}`].attempts++;
+    if (t.scoreAfter == 0) session.stats.checkout.segments[t.segment].success++
+  })
+
+  Object.values(session.stats.checkout.segments).forEach(s => s.percentage = s.attempts ? ((s.success / s.attempts) * 100).toFixed(0) : 0)
 }
 
-function updateSessionStatsUI(session) {
+function updateTrackerUI(session) {
   const totalThrows = session.stats.basic.totalThrows
   const average = session.stats.basic.average
   
-  function drawStats() {
-    ctx.fillStyle = "#111";
-    ctx.font = "bold 16px monospace";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "bottom";
+  ctx.fillStyle = "#111";
+  ctx.font = "bold 16px monospace";
+  ctx.textBaseline = "bottom";
+  ctx.textAlign = "right";
+  ctx.fillText(`Average: ${average}`,498,499);
+  if (!gameState.isGame) {ctx.textAlign = "left"; ctx.fillText(`Throws: ${totalThrows}`,2,499);}
+}
 
-    ctx.fillText(`Throws: ${totalThrows}`,2,499);
-
-    ctx.textAlign = "right";
-    ctx.fillText(`Average: ${average}`,498,499);
-  }
-  
-  drawStats()
-
-  const statBox = document.querySelectorAll("#view-scoring .stat-box")
-  statBox[0].innerText = totalThrows
+export function showSessionStats(session) {
+  let statBox = document.querySelectorAll("#view-scoring .stat-box")
+  statBox[0].innerText = session.stats.basic.totalThrows
   statBox[1].innerText = session.raw.visits.length
-  statBox[2].innerText = average
-  statBox[3].innerText = session.stats.scoring.throws.T20
-  statBox[4].innerText = session.stats.scoring.throws.T19
-  statBox[5].innerText = session.stats.scoring.throws.T18
-  statBox[6].innerText = session.stats.scoring.throws.T17
-  statBox[7].innerText = session.stats.scoring.throws.T16
-  statBox[8].innerText = session.stats.scoring.visits.v180
-  statBox[9].innerText = session.stats.scoring.visits.v171
-  statBox[10].innerText = session.stats.scoring.visits.v133
-  statBox[11].innerText = session.stats.scoring.visits.v95
-  statBox[12].innerText = session.stats.scoring.visits.v57
+  statBox[2].innerText = session.stats.basic.average
+  statBox[3].innerText = session.stats.scoring.scoringAverage
+
+  const topScores = document.querySelectorAll(".top-scores");
+  const trebleCount = Object.entries(session.stats.scoring.throws).sort((a, b) => b[1] - a[1]);
+
+  topScores[0].innerText = session.stats.scoring.visits.v180
+  topScores.forEach((box, i) => {
+    if (i == 0) return;
+    if (i < trebleCount.length) box.innerText = `${trebleCount[i-1][0]}: ${trebleCount[i-1][1]}`;
+    else box.innerText = "";
+  });
+
+  statBox = document.querySelectorAll("#view-doubling .stat-box")
+  statBox[0].innerText = session.stats.checkout.attempts
+  statBox[1].innerText = session.stats.checkout.success
+  statBox[2].innerText = session.stats.checkout.percentage + "%"
+  statBox[3].innerText = session.stats.checkout.when.throw1.success + "/" + session.stats.checkout.when.throw1.attempts + " | " + (100*session.stats.checkout.when.throw1.success/session.stats.checkout.when.throw1.attempts).toFixed(0) + "%"
+  statBox[4].innerText = session.stats.checkout.when.visit1.success + "/" + session.stats.checkout.when.visit1.attempts + " | " + (100*session.stats.checkout.when.visit1.success/session.stats.checkout.when.visit1.attempts).toFixed(0) + "%"
+  statBox[5].innerText = session.stats.checkout.when.visit2.success + "/" + session.stats.checkout.when.visit2.attempts + " | " + (session.stats.checkout.when.visit2.attempts ? (100*session.stats.checkout.when.visit2.success/session.stats.checkout.when.visit2.attempts).toFixed(0) : 0) + "%"
+
+  const topDoubles = document.querySelectorAll(".top-doubles");
+  const doubleCount = Object.entries(session.stats.checkout.segments).sort((a, b) => b[1].percentage - a[1].percentage || b[1].attempts - a[1].attempts);
+
+  topDoubles.forEach((box, i) => {
+    if (i < doubleCount.length) box.innerText =  `${doubleCount[i][0]}: ${doubleCount[i][1].percentage}% (${doubleCount[i][1].success}/${doubleCount[i][1].attempts})`;
+    else box.innerText = ""
+  })
 }
 
 export function showAllTimeStats(longTermStats) {
-  const statBox = document.querySelectorAll("#view-scoring .stat-box")
+  let statBox = document.querySelectorAll("#view-scoring .stat-box")
   statBox[0].innerText = longTermStats.basic.totalThrows
   statBox[1].innerText = longTermStats.basic.totalVisits
   statBox[2].innerText = longTermStats.basic.average
-  statBox[3].innerText = longTermStats.scoring.throws.T20
-  statBox[4].innerText = longTermStats.scoring.throws.T19
-  statBox[5].innerText = longTermStats.scoring.throws.T18
-  statBox[6].innerText = longTermStats.scoring.throws.T17
-  statBox[7].innerText = longTermStats.scoring.throws.T16
-  statBox[8].innerText = longTermStats.scoring.visits.v180
-  statBox[9].innerText = longTermStats.scoring.visits.v171
-  statBox[10].innerText = longTermStats.scoring.visits.v133
-  statBox[11].innerText = longTermStats.scoring.visits.v95
-  statBox[12].innerText = longTermStats.scoring.visits.v57
+  statBox[3].innerText = longTermStats.scoring.scoringAverage
+
+  const topScores = document.querySelectorAll(".top-scores");
+  const trebleCount = Object.entries(longTermStats.scoring.throws).sort((a, b) => b[1] - a[1] || b[1].attempts - a[1].attempts);
+
+  topScores[0].innerText = longTermStats.scoring.visits.v180
+  topScores.forEach((box, i) => {
+    if (i == 0) return;
+    if (i < trebleCount.length) box.innerText = `${trebleCount[i-1][0]}: ${trebleCount[i-1][1]}`;
+    else box.innerText = "";
+  });
+
+  statBox = document.querySelectorAll("#view-doubling .stat-box")
+  statBox[0].innerText = longTermStats.checkout.attempts
+  statBox[1].innerText = longTermStats.checkout.success
+  statBox[2].innerText = longTermStats.checkout.percentage + "%"
+  statBox[3].innerText = longTermStats.checkout.when.throw1.success + "/" + longTermStats.checkout.when.throw1.attempts + " | " + (100*longTermStats.checkout.when.throw1.success/longTermStats.checkout.when.throw1.attempts).toFixed(0) + "%"
+  statBox[4].innerText = longTermStats.checkout.when.visit1.success + "/" + longTermStats.checkout.when.visit1.attempts + " | " + (100*longTermStats.checkout.when.visit1.success/longTermStats.checkout.when.visit1.attempts).toFixed(0) + "%"
+  statBox[5].innerText = longTermStats.checkout.when.visit2.success + "/" + longTermStats.checkout.when.visit2.attempts + " | " + (longTermStats.checkout.when.visit2.attempts ? (100*longTermStats.checkout.when.visit2.success/longTermStats.checkout.when.visit2.attempts).toFixed(0) : 0) + "%"
+
+
+  const topDoubles = document.querySelectorAll(".top-doubles");
+  const doubleCount = Object.entries(longTermStats.checkout.segments).sort((a, b) => b[1].percentage - a[1].percentage);
+
+  topDoubles.forEach((box, i) => {
+    if (i < doubleCount.length) box.innerText =  `${doubleCount[i][0]}: ${doubleCount[i][1].percentage}% (${doubleCount[i][1].success}/${doubleCount[i][1].attempts})`;
+    else box.innerText = ""
+  })
 }
 
 export function showQuickViewStats(longTermStats) {
@@ -307,7 +404,7 @@ export function showQuickViewStats(longTermStats) {
   statBox[6].innerText = longTermStats.milestone.shortestLeg + " throws"
 }
 
-export function showSessionStats(session) {
+export function showSessionSummary(session) {
   const statBox = document.querySelectorAll("#view-session .stat-box")
   const s = session.stats
   const stats = [s.basic.totalThrows,s.basic.average,s.checkout.percentage + "%"] 
@@ -359,14 +456,14 @@ function lastThreeThrows(session) {
 export function init(session) {
   drawDartboard();
   updateSessionStats(session);
-  updateSessionStatsUI(session);
+  updateTrackerUI(session);
   if (gameState.isGame) {drawGameScore(), gameState.leg = 1};
 }
 
 export function update(session) {
   drawDartboard();
-  updateSessionStats(session);
-  updateSessionStatsUI(session);
-  lastThreeThrows(session);
   if (gameState.isGame) updateGameScore(session);
+  lastThreeThrows(session);
+  updateSessionStats(session);
+  updateTrackerUI(session);
 }

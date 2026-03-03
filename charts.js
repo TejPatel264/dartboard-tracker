@@ -41,6 +41,12 @@ export function createBarChart(canvas,x,y) {
                 x: {
                     grid: {
                         display: false
+                    },
+                    ticks: {
+                        autoskip: false,
+                        font: {
+                            size: x.length > 10 ? 10 : 12
+                        }
                     }
                 },
                 y: {
@@ -49,7 +55,11 @@ export function createBarChart(canvas,x,y) {
                     ticks: {
                         stepSize: 1,
                         precision: 0,
-                        callback: value => Math.round(value)
+                        maxTicksLimit: 6,
+                        callback: value => Math.round(value),
+                        font: {
+                            size: 12
+                        }
                     },
                     grid: {
                         display: false
@@ -58,10 +68,15 @@ export function createBarChart(canvas,x,y) {
                 yRight: {
                     position: "right",
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
+                        maxTicksLimit: 6,
+                        font: {
+                            size: 12
+                        }
                     },
                     grid: {
-                        drawOnChartArea: false
+                        drawOnChartArea: false,
+                        display: false
                     }
                 }
             }
@@ -254,8 +269,8 @@ function drawAllDarts(canvas,sessions) {
                 if (i>=throws.length) {resolve(); return;}
                 const t = throws[i]
                 if (t.multiplier == 3 && t.score > 45) {ctx.strokeStyle = "#d4a017"; size = 2.5;}
-                else if (t.multiplier == 2) {ctx.strokeStyle = "#007a3d"; size = 3;}
-                else if (t.multiplier == 0) {ctx.strokeStyle = "#b11226"; size = 1;}
+                else if (t.multiplier == 2 && t.isCheckoutAttempt && t.scoreAfter == 0) {ctx.strokeStyle = "#007a3d"; size = 3;}
+                else if (t.multiplier == 0 || t.isCheckoutAttempt) {ctx.strokeStyle = "#b11226"; size = 1;}
                 else {ctx.strokeStyle = "#222"; size = 1.5;}
                 ctx.beginPath();
                 ctx.moveTo(t.x-size,t.y-size);

@@ -3,7 +3,7 @@ import { appState } from "./states.js";
 const page = document.getElementById("pages");
 const trackerPage = document.getElementById("tracker");
 
-export function showSummaryStats() {
+export function showSummaryStatView() {
   if (document.getElementById("view-quick").hasAttribute("show")) return;
   document.querySelectorAll(".stat-view").forEach(view => view.removeAttribute("show"));
   document.getElementById("view-quick").toggleAttribute("show")
@@ -15,10 +15,16 @@ export async function showSessionStatView() {
   document.getElementById("view-session").toggleAttribute("show")
 }
 
-export function showScoringStats() {
+export function showScoringStatView() {
   if (document.getElementById("view-scoring").hasAttribute("show")) return;
   document.querySelectorAll(".stat-view").forEach(view => view.removeAttribute("show"));
   document.getElementById("view-scoring").toggleAttribute("show");
+}
+
+export function showDoublingStatView() {
+  if (document.getElementById("view-doubling").hasAttribute("show")) return;
+  document.querySelectorAll(".stat-view").forEach(view => view.removeAttribute("show"));
+  document.getElementById("view-doubling").toggleAttribute("show");
 }
 
 export function toTracker() {

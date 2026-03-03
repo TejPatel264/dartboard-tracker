@@ -45,10 +45,110 @@ section {
 #stats-page {
     display: flex;
     width: 100vw;
-    height: 90vh;
+    height: 80vh;
     flex-direction: row;
+    justify-content: center;
+    margin-top: 10vh;
 }
 
+.stats-names {
+    color: #ccc;
+    width: 750px;
+    height: 20px;
+    display: flex;
+    flex-direction: row;
+    margin-top: 10px;
+    gap: 2px;
+}
+
+.stats-numbers {
+    width: 750px;
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+}
+
+.stat-box {
+    flex: 1; 
+    border: 1px solid #bbb; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: large;
+}
+
+.stat {
+    flex: 1; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-weight: bold;
+    font-size: small;
+    background-color: #7c1f25;
+}
+
+#scoring-layout {
+    display: flex;
+    flex-direction: column;
+    width: 750px;
+}
+
+#scoring-grid {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,3.5fr);
+    grid-template-rows: auto auto;
+    gap: 4px;
+    margin-top: 10px;
+}
+
+#top-scores-box {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 110px;
+    padding-top: 10px;
+    padding-right: 15px;
+    font-size: large;
+    text-align: left;
+    align-items: center;
+    font-variant-numeric: tabular-nums;
+}
+
+#scoring-dashboard {
+    display: flex;
+    width: 748px;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #bbb;
+    background-color: #cfcfcf;
+}
+
+.graph-wrapper {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+}
+
+.stat-view canvas {
+    height: 100% !important;
+    width: auto;
+}
+
+#visit-graph-container {
+    grid-column: 2;
+    grid-row: 1;
+    height: 200px;
+}
+
+#throw-graph-container {
+    grid-column: 1 / span 2;
+    grid-row: 2;
+    height: 270px;
+}
 
 #home p {
     font-size: smaller;
@@ -101,48 +201,12 @@ h2 {
 }
 
 #stats h2 {
-    margin: 10px;
-}
-
-.stat-box {
-    flex: 1; 
-    border: 1px solid #bbb; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    font-size: large;
-}
-
-.stat {
-    flex: 1; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-weight: bold;
-    font-size: small;
-    background-color: #7c1f25;
+    position: absolute;
+    top: 2vh;
 }
 
 #quick-view .stat{
     background-color: #333;
-}
-
-.stats-names {
-    color: #ccc;
-    width: 600px;
-    height: 20px;
-    display: flex;
-    flex-direction: row;
-    margin-top: 10px;
-    gap: 2px;
-}
-
-.stats-numbers {
-    width: 600px;
-    height: 40px;
-    display: flex;
-    flex-direction: row;
-    gap: 2px;
 }
 
 [data-current] {
@@ -210,10 +274,15 @@ button:hover {
 
 .pill {
     display: flex;
-    position: relative;
+    position: absolute;
+    top: 10vh;
     border-radius: 8px;
     overflow: hidden;
     background-color: #245e52;
+}
+
+.pill[hidden] {
+    display: none;
 }
 
 .slider {
