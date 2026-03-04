@@ -13,6 +13,7 @@ let {canvas,} = appState;
 let session
 let throwGraph;
 let visitGraph;
+let doublesGraph;
 let sessionTimeline;
 let allSessions = await database.sessions.toArray();
 let longTermStats = calculateLongTermStats(allSessions);
@@ -24,6 +25,7 @@ const slider = document.querySelector(".slider")
 const trackerPage = document.getElementById("tracker");
 const throwGraphCanvas = document.getElementById("throw-graph");
 const visitGraphCanvas = document.getElementById("visit-graph");
+const doublesGraphCanvas = document.getElementById("doubles-graph");
 const dartboardCanvas = document.querySelectorAll(".dartboard-heatmap");
 const dartMarkerCanvas = document.querySelectorAll(".dartmarkers");
 const heatmapCanvas = document.querySelectorAll(".heatmap");
@@ -92,6 +94,7 @@ btn.sessionStats.addEventListener("click", () => {
   slider.style.transform = "translateX(0%)";
   updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
+  updateBarChart(doublesGraph, Object.keys(session.stats.checkout.segments), Object.keys(session.stats.checkout.segments).map(key => session.stats.checkout.segments[key].percentage), 100);
   showSessionStats(session)
 })
 
@@ -99,6 +102,7 @@ btn.allTimeStats.addEventListener("click", () => {
   slider.style.transform = "translateX(100%)";
   updateBarChart(throwGraph, Object.keys(longTermStats.scoring.throws), Object.values(longTermStats.scoring.throws), longTermStats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(longTermStats.scoring.visits), longTermStats.basic.totalVisits);
+  updateBarChart(doublesGraph, Object.keys(longTermStats.checkout.segments), Object.keys(longTermStats.checkout.segments).map(key => longTermStats.checkout.segments[key].percentage), 100);
   showAllTimeStats(longTermStats);
 })
 
@@ -127,10 +131,11 @@ btn.toGameMode.addEventListener("click", async () => {
   init(session);
   throwGraph = createBarChart(throwGraphCanvas, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws));
   visitGraph = createBarChart(visitGraphCanvas, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits));
+  doublesGraph = createBarChart(doublesGraphCanvas, Object.keys(session.stats.checkout.segments), Object.keys(session.stats.checkout.segments).map(key => session.stats.checkout.segments[key].percentage));
   updateBarChart(throwGraph, Object.keys(longTermStats.scoring.throws), Object.values(longTermStats.scoring.throws), longTermStats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(longTermStats.scoring.visits), longTermStats.basic.totalVisits);
   showAllTimeStats(longTermStats);
-  //sessionTimeline = createLineChart(document.getElementById("session-timeline"), session.raw.throws.map((_,i) => i), session.raw.throws.map(t => t.score));
+  //sessionTimeline = createLineChart(document.getElementById("session-timeline"), session.raw.throws.map((_,i) => i), session.raw.throws.map(t => t.score));\
   subtitle.innerText = "Game Mode";
   page.style.transform = "translateX(-100vw)";
   
@@ -153,17 +158,18 @@ btn.backToHomeFromTracker.addEventListener("click", () => {
 btn.toStats.addEventListener("click", async () => {
   if (!gameState.isPaused) return;
   if (!pill.hasAttribute("hidden")) pill.toggleAttribute("hidden");
+  allSessions = await database.sessions.toArray();
   showSessionStats(session);
   showSessionStatView();
-  showSessionSummary(session);
+  showSessionSummary(player,session, allSessions);
   appState.page = "stats";
   updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
+  updateBarChart(doublesGraph, Object.keys(session.stats.checkout.segments), Object.keys(session.stats.checkout.segments).map(key => session.stats.checkout.segments[key].percentage), 100);
   //updateLineChart(sessionTimeline, session.raw.throws.map((_,i) => i), session.raw.throws.map(t => t.score));
   slider.style.transform = "translateX(0%)";
   page.style.transform = "translateX(-200vw)";
   viewStatsSelect.style.display = "flex";
-  allSessions = await database.sessions.toArray();
   longTermStats = calculateLongTermStats(allSessions);
   createHeatmap(dartboardCanvas[1],dartMarkerCanvas[1],heatmapCanvas[1], [session], false);
 })

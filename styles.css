@@ -53,7 +53,7 @@ section {
 
 .stats-names {
     color: #ccc;
-    width: 750px;
+    width: 1000px;
     height: 20px;
     display: flex;
     flex-direction: row;
@@ -62,7 +62,7 @@ section {
 }
 
 .stats-numbers {
-    width: 750px;
+    width: 1000px;
     height: 40px;
     display: flex;
     flex-direction: row;
@@ -72,6 +72,7 @@ section {
 .stat-box {
     flex: 1; 
     border: 1px solid #bbb; 
+    background-color: #cfcfcf;
     display: flex; 
     align-items: center; 
     justify-content: center;
@@ -88,10 +89,49 @@ section {
     background-color: #7c1f25;
 }
 
+#session-dashboard {
+    display: flex;
+    width: 998px;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #bbb;
+    background-color: #cfcfcf;
+}
+
+#session-grid {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1.5fr);
+    grid-template-rows: auto auto;
+    gap: 4px;
+    margin-top: 10px;
+}
+
+#session-card {
+    margin-top: 50px;
+    min-width: 330px;
+}
+
+.session-stat {
+    opacity: 0.9;
+    font-size: smaller;
+}
+
+#session-meta {
+    font-size: small;
+    opacity: 0.8
+}
+
+#view-session .heatmap-container {
+    grid-column: 2;
+    grid-row: 1;
+    height: 500px;
+}
+
 #scoring-layout {
     display: flex;
     flex-direction: column;
-    width: 750px;
+    width: 1000px;
 }
 
 #scoring-grid {
@@ -116,7 +156,7 @@ section {
 
 #scoring-dashboard {
     display: flex;
-    width: 748px;
+    width: 998px;
     height: 100%;
     justify-content: center;
     align-items: center;
@@ -148,6 +188,42 @@ section {
     grid-column: 1 / span 2;
     grid-row: 2;
     height: 270px;
+}
+
+#doubles-dashboard {
+    display: flex;
+    width: 998px;
+    height: 400px;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #bbb;
+    background-color: #cfcfcf;
+}
+
+#doubles-grid {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,3.5fr);
+    grid-template-rows: auto auto;
+    gap: 4px;
+    margin-top: 10px;
+}
+
+#top-doubles-box {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 190px;
+    padding-top: 10px;
+    padding-right: 15px;
+    font-size: large;
+    text-align: left;
+    align-items: center;
+    font-variant-numeric: tabular-nums;
+}
+
+#doubles-graph-container {
+    grid-column: 2;
+    grid-row: 1;
+    height: 300px;
 }
 
 #home p {

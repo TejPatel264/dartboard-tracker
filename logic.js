@@ -404,11 +404,45 @@ export function showQuickViewStats(longTermStats) {
   statBox[6].innerText = longTermStats.milestone.shortestLeg + " throws"
 }
 
-export function showSessionSummary(session) {
-  const statBox = document.querySelectorAll("#view-session .stat-box")
+export function showSessionSummary(player, session, allSessions) {
   const s = session.stats
-  const stats = [s.basic.totalThrows,s.basic.average,s.checkout.percentage + "%"] 
-  statBox.forEach((box, i) => box.innerText = stats[i])
+  const sessionCard = document.getElementById("session-card")
+  const sessionCount = allSessions.filter(s => s.raw.throws.length > 0).length
+  const formatter = new Intl.DurationFormat("en", { style: "long" });
+  const duration = {
+    hours: Math.floor(session.meta.duration / 3600000),
+    minutes: Math.floor((session.meta.duration % 3600000) / 60000),
+    seconds: Math.floor((session.meta.duration % 60000) / 1000)
+  };
+  const d = new Date(session.meta.date)
+  const time = d.toLocaleTimeString('en-GB', { 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    hour12: false 
+  });
+
+  const legs = s.basic.throwsPerLeg.length
+  
+  sessionCard.innerHTML = 
+  `<div id="session-meta">
+  Name: ${player.name}
+  <br>Session: ${sessionCount}
+  <br>Date: ${d.toLocaleDateString()}
+  <br>Time: ${time}
+  <br>Duration: ${formatter.format(duration)}
+  </div>
+  <hr>
+  <div id="session-summary">
+  <br><span class="session-stat">Legs Played:</span> ${legs}
+  <br><br><span class="session-stat">Throws:</span> ${s.basic.totalThrows}
+  <br><br><span class="session-stat">Visits:</span> ${s.basic.totalVisits}
+  <br><br><span class="session-stat">Average:</span> ${s.basic.average}
+  <br><br><span class="session-stat">171+ visits:</span> ${s.scoring.visits.v171}
+  <br><br><span class="session-stat">Highest visit:</span> ${Math.max(...session.raw.visits)}
+  <br><br><span class="session-stat">Checkout %:</span> ${s.checkout.percentage}%
+  <br><br><span class="session-stat">Highest Checkout:</span> ${s.checkout.highest}
+  </div>
+  `
 }
 
 function drawDartMarker(x,y,current=false) {
