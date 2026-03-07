@@ -313,7 +313,7 @@ function drawHeatmap(canvas, sessions) {
     const data = img.data;
 
     function colourGradient(a) {
-        a = Math.pow(a,0.5)
+        a = Math.pow(a,0.6)
 
         if (a < 0.25) return [20,40,70];
         else if (a < 0.60) return [46,204,113];
@@ -329,6 +329,7 @@ function drawHeatmap(canvas, sessions) {
         data[i] = r
         data[i+1] = g
         data[i+2] = b
+        data[i+3] = Math.pow(alpha,0.6)*255
     }
 
     ctx.putImageData(img,0,0)
@@ -343,10 +344,12 @@ export function createHeatmap(dartboardCanvas, dartMarkerCanvas, heatmapCanvas, 
     dartMarkerCanvas.getContext("2d").clearRect(0,0,dartMarkerCanvas.width,dartMarkerCanvas.height)
     heatmapCanvas.getContext("2d", {willReadFrequently: true}).clearRect(0,0,heatmapCanvas.width,heatmapCanvas.height)
     drawBlankDartboard(dartboardCanvas);
-    if (!heatmap) setTimeout(() => drawAllDarts(dartMarkerCanvas, sessions), 1500);
-    else {page.addEventListener("transitionend", () => {
+    setTimeout(() => drawAllDarts(dartMarkerCanvas, sessions), 1500);
+    if (heatmap)  {
+        page.addEventListener("transitionend", () => {
             drawHeatmap(heatmapCanvas,sessions);
-            setTimeout(() => heatmapCanvas.style.opacity = 1, 500)
+            setTimeout(() => dartMarkerCanvas.style.opacity = 0, 3500)
+            setTimeout(() => heatmapCanvas.style.opacity = 1, 4000)
         }, {once: true});
     }
 }

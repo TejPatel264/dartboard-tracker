@@ -33,7 +33,11 @@ const allCanvas = document.querySelectorAll("canvas");
 const viewStatsSelect = document.getElementById("view-stats-select");
 const summaryTitle = document.querySelector("#stats h2");
 
-//for (let session of allSessions) {database.sessions.put(session)}
+for (let session of allSessions) {
+  updateSessionStats(session);
+  database.sessions.put(session)
+}
+
 
 createPlayer()
 const player = await database.player.get("local");
@@ -177,7 +181,7 @@ btn.toStats.addEventListener("click", async () => {
 btn.toQuickStats.addEventListener("click", async () => {
   allSessions = await database.sessions.toArray();
   longTermStats = calculateLongTermStats(allSessions);
-  showQuickViewStats(longTermStats);
+  showQuickViewStats(player, allSessions, longTermStats);
   if (!pill.hasAttribute("hidden")) pill.toggleAttribute("hidden");
   trackerPage.style.opacity = 0;
   btn.backToTracker.toggleAttribute("hidden");
@@ -217,7 +221,7 @@ btn.viewQuickStats.addEventListener("click", async () => {
   allSessions = await database.sessions.toArray();
   longTermStats = calculateLongTermStats(allSessions);
   if (!pill.hasAttribute("hidden")) pill.toggleAttribute("hidden");
-  showQuickViewStats(longTermStats);
+  showQuickViewStats(player,allSessions,longTermStats);
   createHeatmap(dartboardCanvas[0],dartMarkerCanvas[0],heatmapCanvas[0], allSessions);
 });
 

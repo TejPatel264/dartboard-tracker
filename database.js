@@ -41,6 +41,7 @@ export function createSession() {
       basic: {
           totalThrows: 0,
           totalVisits: 0,
+          totalLegs: 0,
           average: 0,
           throwsPerLeg: []
       },
@@ -78,9 +79,11 @@ export function createSession() {
         }
       },
       checkout: {
+        all: [],
         attempts: 0,
         success: 0,
         percentage: 0,
+        tonPlus: 0,
         highest: 0,
         segments: {
           D20: {attempts: 0, success: 0, percentage: 0},

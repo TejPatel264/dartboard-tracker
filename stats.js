@@ -4,12 +4,14 @@ export function calculateLongTermStats(sessions) {
         basic: {
             totalThrows: 0,
             totalVisits: 0,
+            totalLegs: 0,
             average: 0
         },
         scoring: {
             scoringThrows: 0,
             scoringAverage: 0,
             visits: {
+                highest: 0,
                 v180: 0,
                 v171: 0,
                 v133: 0,
@@ -43,6 +45,7 @@ export function calculateLongTermStats(sessions) {
             attempts: 0,
             success: 0,
             percentage: 0,
+            tonPlus: 0,
             segments: {
                 D20:{attempts: 0, success: 0, percentage: 0}, 
                 D19:{attempts: 0, success: 0, percentage: 0}, 
@@ -76,6 +79,7 @@ export function calculateLongTermStats(sessions) {
 
     longTermStats.basic.totalThrows = sessions.reduce((sum,s) => sum + s.stats.basic.totalThrows, 0);
     longTermStats.basic.totalVisits = sessions.reduce((sum,s) => sum + s.stats.basic.totalVisits, 0);
+    longTermStats.basic.totalLegs = sessions.reduce((sum,s) => sum + s.stats.basic.totalLegs, 0);
     ["v180", "v171", "v133", "v95", "v57"].forEach(v => longTermStats.scoring.visits[v] = sessions.reduce((sum, s) => sum + s.stats.scoring.visits[v], 0));
     const trebles = ["T20", "T19", "T18", "T17", "T16", "T15", "T14", "T13", "T12", "T11", "T10", "T9", "T8", "T7", "T6", "T5", "T4", "T3", "T2", "T1"];
     trebles.forEach(t => longTermStats.scoring.throws[t] = sessions.reduce((sum, s) => sum + s.stats.scoring.throws[t], 0));
@@ -87,9 +91,11 @@ export function calculateLongTermStats(sessions) {
     longTermStats.basic.average = longTermStats.basic.totalThrows ? (sessions.reduce((sum,s) => sum + s.stats.basic.average * s.stats.basic.totalThrows, 0)/longTermStats.basic.totalThrows).toFixed(2) : 0;
     longTermStats.scoring.scoringThrows = sessions.reduce((sum,s) => sum + s.stats.scoring.scoringThrows, 0);
     longTermStats.scoring.scoringAverage = longTermStats.scoring.scoringThrows ? (sessions.reduce((sum,s) => sum + s.stats.scoring.scoringAverage * s.stats.scoring.scoringThrows, 0)/(longTermStats.scoring.scoringThrows)).toFixed(2) : 0;
+    longTermStats.scoring.visits.highest = sessions.reduce((best,s) => Math.max(best, Math.max(...s.raw.visits)), 0);
     longTermStats.checkout.attempts = sessions.reduce((sum,s) => sum + s.stats.checkout.attempts, 0);
     longTermStats.checkout.success = sessions.reduce((sum,s) => sum + s.stats.checkout.success, 0);
     longTermStats.checkout.percentage = longTermStats.checkout.attempts ? ((longTermStats.checkout.success/longTermStats.checkout.attempts)*100).toFixed(2) : 0;
+    longTermStats.checkout.tonPlus = sessions.reduce((sum,s) => sum + s.stats.checkout.tonPlus, 0);
     longTermStats.milestone.bestAverage = sessions.reduce((best, s) => Math.max(best, s.stats.basic.average), 0);
     longTermStats.milestone.bestPercentage = sessions.reduce((best, s) => Math.max(best, s.stats.checkout.percentage), 0);
     longTermStats.milestone.shortestLeg = sessions.reduce((best, s) => {

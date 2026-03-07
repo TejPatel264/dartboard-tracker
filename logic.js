@@ -147,6 +147,7 @@ function updateGameScore(session) {
   if (gameState.scoreRemaining == 0 && isValidCheckout) {
     gameState.isPaused = true;
     session.stats.basic.throwsPerLeg.push(currentLegScores.length);
+    session.stats.basic.totalLegs = session.stats.basic.throwsPerLeg.length
     session.stats.checkout.highest = Math.max(session.stats.checkout.highest, throws[throws.length-(throws.length%3||3)-1].scoreAfter);
     setTimeout(() => {
       canvas.style.cursor = "default";
@@ -251,7 +252,6 @@ export function updateSessionStats(session) {
   session.stats.checkout.success = throws.filter(t => t.scoreAfter == 0).length
   session.stats.checkout.percentage = ((session.stats.checkout.success / session.stats.checkout.attempts) * 100).toFixed(2);
 
-
   session.stats.checkout.when.throw1.attempts = 0
   session.stats.checkout.when.visit1.attempts = 0
   session.stats.checkout.when.visit2.attempts = 0
@@ -259,16 +259,20 @@ export function updateSessionStats(session) {
   session.stats.checkout.when.throw1.success = 0
   session.stats.checkout.when.visit1.success = 0
   session.stats.checkout.when.visit2.success = 0
+  session.stats.checkout.all = []
+  session.stats.checkout.tonPlus = 0
 
   const legs = throws.reduce((acc, t) => {
     (acc[t.leg] ??= []).push(t);
     return acc;
   }, {})
   Object.values(legs).forEach(leg => {
+    if (leg[leg.length-1]?.scoreAfter != 0) return;
+    session.stats.checkout.all.push(leg[leg.length-(leg.length%3||3)-1].scoreAfter);
+    if (leg[leg.length-(leg.length%3||3)-1].scoreAfter >= 100) session.stats.checkout.tonPlus++;
     const checkoutThrows = leg.filter(t => t.isCheckoutAttempt);
-    if (checkoutThrows[checkoutThrows.length-1]?.scoreAfter != 0) return;
-    session.stats.checkout.when.throw1.attempts++
-    session.stats.checkout.when.visit1.attempts++
+    session.stats.checkout.when.throw1.attempts++;
+    session.stats.checkout.when.visit1.attempts++;
     if (checkoutThrows.length == 1) session.stats.checkout.when.throw1.success++
     if (checkoutThrows[checkoutThrows.length-1].visit == checkoutThrows[0].visit) session.stats.checkout.when.visit1.success++
     if (checkoutThrows[checkoutThrows.length-1].visit == checkoutThrows[0].visit+1) {
@@ -393,22 +397,90 @@ export function showAllTimeStats(longTermStats) {
   })
 }
 
-export function showQuickViewStats(longTermStats) {
-  const statBox = document.querySelectorAll("#view-quick .stat-box")
-  statBox[0].innerText = longTermStats.basic.totalThrows
-  statBox[1].innerText = longTermStats.basic.average
-  statBox[2].innerText = longTermStats.checkout.percentage + "%"
-  statBox[3].innerText = longTermStats.milestone.bestAverage
-  statBox[4].innerText = longTermStats.milestone.bestPercentage + "%"
-  statBox[5].innerText = longTermStats.checkout.highest
-  statBox[6].innerText = longTermStats.milestone.shortestLeg + " throws"
+export function showQuickViewStats(player, allSessions, longTermStats) {
+  const summaryCard = document.querySelectorAll(".summary-card")
+  const sessionCount = allSessions.filter(s => s.raw.throws.length > 0).length
+  const doubleCount = Object.entries(longTermStats.checkout.segments).sort((a, b) => b[1].percentage - a[1].percentage);
+  const trebleCount = Object.entries(longTermStats.scoring.throws).sort((a, b) => b[1] - a[1] || b[1].attempts - a[1].attempts);
+  const hit170 = allSessions.reduce((best,s) => Math.max(best,s.stats.checkout.highest),0)==170
+  const maxDuration = allSessions.reduce((max, s) => Math.max(max,Number(s.meta.duration)),0)
+  const totalDuration = allSessions.reduce((sum, s) => sum + Number(s.meta.duration),0)
+  const formatter = new Intl.DurationFormat("en", { style: "short" });
+  const maxDurationString = {
+    hours: Math.floor(maxDuration / 3600000),
+    minutes: Math.floor((maxDuration % 3600000) / 60000),
+    seconds: Math.floor((maxDuration % 60000) / 1000)
+  };
+  const totalDurationString = {
+    hours: Math.floor(totalDuration / 3600000),
+    minutes: Math.floor((totalDuration % 3600000) / 60000),
+    seconds: Math.floor((totalDuration % 60000) / 1000)
+  };
+  
+  const dates = [...new Set(allSessions.map(s => new Date(s.meta.date).toDateString()))]
+    .map(d => new Date(d))
+    .sort((a,b) => (a - b))
+  let longest = 0
+  let current = 1
+  for (let i=1; i<dates.length; i++) {
+    const diff = (dates[i]-dates[i-1])/1000*60*60*24
+    if (diff == 1) current++
+    else {longest = Math.max(longest, current); current=1}
+  }
+  longest = Math.max(longest, current)
+  let currentStreak = 1;
+  for (let i=1; i<dates.length; i++) {
+    const diff = (dates[i]-dates[i-1])/1000*60*60*24
+    if (diff == 1) currentStreak++
+    else break
+  }
+  const diffFromToday = Math.floor((new Date() - dates[dates.length-1])/(1000*60*60*24))
+  if (diffFromToday>1) currentStreak = 0;
+
+
+  summaryCard[0].innerHTML = 
+  `<div class="card-meta">
+  <hr>
+  <br>Days Played: ${dates.length} ${dates.length==1?"day":"days"}
+  <br><br>Total Sessions: ${sessionCount}
+  <br><br>Longest Session: ${formatter.format(maxDurationString)}
+  <br><br>Total Play Time: ${formatter.format(totalDurationString)}
+  </div>
+  <br><hr>
+  <br><span class="card-stat">Total Legs:</span> ${longTermStats.basic.totalLegs}
+  <br><br><span class="card-stat">Total Visits:</span> ${longTermStats.basic.totalVisits}
+  <br><br><span class="card-stat">Total Throws:</span> ${longTermStats.basic.totalThrows}
+  <br><br><span class="card-stat">All Time Average:</span> ${longTermStats.basic.average}
+  <br><br><span class="card-stat">Average Darts to Finish:</span> ${(longTermStats.basic.totalThrows/longTermStats.basic.totalLegs).toFixed(1)} darts
+  <br><br><span class="card-stat">All Time Checkout %:</span> ${longTermStats.checkout.percentage}%
+  <br><br><span class="card-stat">Checkout Attempts per Leg:</span> ${(longTermStats.checkout.attempts/longTermStats.basic.totalLegs).toFixed(1)} darts
+  `
+
+  summaryCard[1].innerHTML = `${player.name}'s All Time Stats<hr style="width:25%; margin-left:50; height:1px; border-width:0; background-color:#7c1f25">`
+
+  summaryCard[2].innerHTML = 
+  `<div class="card-meta">
+  <hr>
+  <br>🔥 ${currentStreak} ${currentStreak==1?"day":"days"} :Current Streak
+  <br><br>🏆 ${longest} ${longest==1?"day":"days"} :Longest Streak
+  </div>
+  <br><hr>
+  <br>${longTermStats.milestone.bestAverage} <span class="card-stat">:Best Average</span> 
+  <br><br>${longTermStats.milestone.bestPercentage}% <span class="card-stat">:Best Checkout %</span>
+  <br><br>${hit170?allSessions.reduce((sum,s) => sum + s.stats.checkout.all.reduce((total,c) => {if (c==170) total++}, 0), 0):longTermStats.checkout.highest} <span class="card-stat">${hit170?":Total 170 Checkouts":":Highest Checkout"}</span>
+  <br><br>${longTermStats.checkout.tonPlus} <span class="card-stat">:100+ Checkouts</span>
+  <br><br>${doubleCount[0][0]} <span class="card-meta">(${doubleCount[0][1].percentage}%)</span> <span class="card-stat">:Most Successful Double</span>
+  <br><br>${trebleCount[0][0]} <span class="card-meta">(${trebleCount[0][1]} times)</span> <span class="card-stat">:Most Hit Treble</span>
+  <br><br>${longTermStats.milestone.shortestLeg} throws <span class="card-stat">:Shortest Leg</span>
+  <br><br>${longTermStats.scoring.visits.highest==180?longTermStats.scoring.visits.v180:longTermStats.scoring.visits.highest} <span class="card-stat">${longTermStats.scoring.visits.highest==180?":Total 180s":":Highest Visit"}</span>
+  `
 }
 
 export function showSessionSummary(player, session, allSessions) {
   const s = session.stats
   const sessionCard = document.getElementById("session-card")
   const sessionCount = allSessions.filter(s => s.raw.throws.length > 0).length
-  const formatter = new Intl.DurationFormat("en", { style: "long" });
+  const formatter = new Intl.DurationFormat("en", { style: "short" });
   const duration = {
     hours: Math.floor(session.meta.duration / 3600000),
     minutes: Math.floor((session.meta.duration % 3600000) / 60000),
@@ -420,27 +492,36 @@ export function showSessionSummary(player, session, allSessions) {
     minute: '2-digit', 
     hour12: false 
   });
-
+  const dates = [...new Set(allSessions.map(s => new Date(s.meta.date).toDateString()))]
+    .map(d => new Date(d))
+    .sort((a,b) => (a - b))
+  let currentStreak = 1;
+  for (let i=1; i<dates.length; i++) {
+    const diff = (dates[i]-dates[i-1])/1000*60*60*24
+    if (diff == 1) currentStreak++
+    else break
+  }
   const legs = s.basic.throwsPerLeg.length
   
   sessionCard.innerHTML = 
-  `<div id="session-meta">
+  `<div class="card-meta">
   Name: ${player.name}
   <br>Session: ${sessionCount}
+  <br>Streak: ${currentStreak} ${currentStreak==1?"day":"days"}
   <br>Date: ${d.toLocaleDateString()}
   <br>Time: ${time}
   <br>Duration: ${formatter.format(duration)}
   </div>
-  <hr>
+  <hr style="border-width:0; height:0.75px; width:75%; margin-left:0; background-color:gray;">
   <div id="session-summary">
-  <br><span class="session-stat">Legs Played:</span> ${legs}
-  <br><br><span class="session-stat">Throws:</span> ${s.basic.totalThrows}
-  <br><br><span class="session-stat">Visits:</span> ${s.basic.totalVisits}
-  <br><br><span class="session-stat">Average:</span> ${s.basic.average}
-  <br><br><span class="session-stat">171+ visits:</span> ${s.scoring.visits.v171}
-  <br><br><span class="session-stat">Highest visit:</span> ${Math.max(...session.raw.visits)}
-  <br><br><span class="session-stat">Checkout %:</span> ${s.checkout.percentage}%
-  <br><br><span class="session-stat">Highest Checkout:</span> ${s.checkout.highest}
+  <br><span class="card-stat">Legs Played:</span> ${legs}
+  <br><br><span class="card-stat">Throws:</span> ${s.basic.totalThrows}
+  <br><br><span class="card-stat">Visits:</span> ${s.basic.totalVisits}
+  <br><br><span class="card-stat">Average:</span> ${s.basic.average}
+  <br><br><span class="card-stat">171+ visits:</span> ${s.scoring.visits.v171}
+  <br><br><span class="card-stat">Highest visit:</span> ${Math.max(...session.raw.visits)}
+  <br><br><span class="card-stat">Checkout %:</span> ${s.checkout.percentage}%
+  <br><br><span class="card-stat">Highest Checkout:</span> ${s.checkout.highest}
   </div>
   `
 }
