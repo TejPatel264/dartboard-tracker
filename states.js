@@ -17,5 +17,6 @@ export let gameState = {
     isPaused: false,
     isGame: false,
     leg: null,
+    throw: null,
     scoreRemaining: 501
 };

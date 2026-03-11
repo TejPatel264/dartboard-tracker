@@ -258,6 +258,7 @@ function drawAllDarts(canvas,sessions) {
         throws = [].concat(...throws).filter(t => t.x != null)
 
         const ctx = canvas.getContext("2d")
+        const center = {x:canvas.width/2, y:canvas.height/2}
         ctx.clearRect(0,0,canvas.width,canvas.height)
         let size = 2
         ctx.lineWidth = 1;
@@ -273,10 +274,10 @@ function drawAllDarts(canvas,sessions) {
                 else if (t.multiplier == 0 || t.isCheckoutAttempt) {ctx.strokeStyle = "#b11226"; size = 1;}
                 else {ctx.strokeStyle = "#222"; size = 1.5;}
                 ctx.beginPath();
-                ctx.moveTo(t.x-size,t.y-size);
-                ctx.lineTo(t.x+size,t.y+size);
-                ctx.moveTo(t.x+size,t.y-size);
-                ctx.lineTo(t.x-size,t.y+size);
+                ctx.moveTo(center.x+t.dx-size,center.y+t.dy-size);
+                ctx.lineTo(center.x+t.dx+size,center.y+t.dy+size);
+                ctx.moveTo(center.x+t.dx+size,center.y+t.dy-size);
+                ctx.lineTo(center.x+t.dx-size,center.y+t.dy+size);
                 ctx.stroke();
                 i++;
             }
@@ -292,6 +293,7 @@ function drawHeatmap(canvas, sessions) {
     const ctx = canvas.getContext("2d")
     const width = canvas.width
     const height = canvas.height
+    const center = {x:width/2, y:height/2}
 
     ctx.clearRect(0,0,width,height)
 
@@ -301,12 +303,12 @@ function drawHeatmap(canvas, sessions) {
 
     for (let t of throws.filter(t => t.x != null)) {
         const alpha = Math.min(0.4, 3*16/throws.length);
-        const g = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, 8);
+        const g = ctx.createRadialGradient(center.x+t.dx, center.y+t.dy, 0, center.x+t.dx, center.y+t.dy, 8);
         g.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
         g.addColorStop(0.4, `rgba(255,255,255,${alpha*0.6})`);
         g.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = g;
-        ctx.fillRect(t.x-8,t.y-8,16,16)
+        ctx.fillRect(center.x+t.dx-8,center.y+t.dy-8,16,16)
     }
 
     const img = ctx.getImageData(0, 0, width, height);

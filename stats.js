@@ -11,12 +11,12 @@ export function calculateLongTermStats(sessions) {
             scoringThrows: 0,
             scoringAverage: 0,
             visits: {
-                highest: 0,
                 v180: 0,
                 v171: 0,
                 v133: 0,
                 v95: 0,
-                v57: 0
+                v57: 0,
+                highest: 0
             },
             throws: {
                 T20: 0,

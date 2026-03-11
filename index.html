@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dartboard Tracker</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -20,19 +21,19 @@
   </section>
   
   <section id="tracker">
-  <div id="instructions">
     <h2 id="subtitle"></h2>
-    <p>Click on the dartboard to record a throw.</p>
+  <div id="instructions">
+    <p>Hold finger on dartboard to see magnifier.</p>
+    <p>Move finger to direct position of your dart.</p>
+    <p>Release to record the throw.</p>
     <p>Use the buttons below to manage your throws.</p>
   </div>
-  <div style="display: flex;">
-    <canvas id="dartboard" width="500" height="500"></canvas>
-    <div id="score-column">
+  <canvas id="dartboard" width="500" height="600"></canvas>
+  <div id="score-column">
       <div class="score-box">.</div>
       <div class="score-box">.</div>
       <div class="score-box">.</div>
     </div>
-  </div>
   <div class="buttons">
     <button id="bounce-out" class="manage-throw">Bounce Out</button>
     <button id="delete-last-throw" class="manage-throw">Delete Last Throw</button>
@@ -45,7 +46,7 @@
   </section>
   
   <section id="stats">
-    <h2>Your Stats</h2>
+    <h2></h2>
       <div hidden class="pill">
       <div class="slider"></div>
       <button id="session-stats" class="switch-stats">Session</button>
@@ -57,6 +58,7 @@
     <div class="stat-view" id="view-quick">
         <div id="summary-dashboard">
         <div id="summary-grid">
+        <div id="summary-card-header" class="summary-card"></div>
         <div id="summary-card-1" class="summary-card"></div>
         <div id="summary-card-2" class="summary-card"></div>
         <div class="heatmap-container">
@@ -64,8 +66,9 @@
         <canvas class="dartmarkers" width="500" height="500"></canvas>
         <canvas class="heatmap" id="all-time-heatmap" width="500" height="500"></canvas>
         </div>
-        <div id="summary-card-footer">🎯 dartboard.io</div>
         <div id="summary-card-3" class="summary-card"></div>
+        <div id="summary-card-4" class="summary-card"></div>
+        <div id="summary-card-footer"></div>
         </div>
         </div>
     </div>
@@ -74,12 +77,18 @@
       <div height="500" width="100%" display="flex" flex-direction="row" gap="0px">
       <div id="session-dashboard">
         <div id="session-grid">
-        <div id="session-card"></div>
+        <div id="session-card-header">SESSION REPORT</div>
+        <hr style="width:50%; margin-left:0; height:1px; border-width:0; background-color:#aaa">
+        <div id="session-card-1" class="session-card"></div>
+        <div id="session-card-2" class="session-card"></div>
         <div class="heatmap-container">
         <canvas class="dartboard-heatmap" width="500" height="500"></canvas>
         <canvas class="dartmarkers" width="500" height="500"></canvas>
         <canvas class="heatmap" id="session-heatmap" width="500" height="500"></canvas>
         </div>
+        <div id="session-card-3" class="session-card"></div>
+        <div id="session-card-4" class="session-card"></div>
+        <div id="session-card-5" class="session-card"></div>
       </div>
       </div>
       </div>
@@ -101,11 +110,16 @@
       </div class="stat-box">
       <div id="scoring-dashboard">
       <div id="scoring-grid">
-        <div id="top-scores-box">
-          🏆 180: <span class="top-scores">99</span>
-          <br><br>🥇 <span class="top-scores">99999</span>
-          <br><br>🥈 <span class="top-scores">99999</span>
-          <br><br>🥉 <span class="top-scores">99999</span>
+        <div id="top-trebles" class="treble-count-box">
+          🏆 180: <span class="treble-count">99</span>
+          <br><br>🥇 <span class="treble-count">99999</span>
+          <br><br>🥈 <span class="treble-count">99999</span>
+          <br><br>🥉 <span class="treble-count">99999</span>
+        </div>
+        <div id="worst-trebles" class="treble-count-box">
+          🥇 <span class="treble-count">99999</span>
+          <br><br>🥈 <span class="treble-count">99999</span>
+          <br><br>🥉 <span class="treble-count">99999</span>
         </div>
       <div id="visit-graph-container" class="graph-wrapper">
       <canvas id="visit-graph"></canvas></div>
@@ -129,10 +143,15 @@
     </div>
     <div id="doubles-dashboard">
     <div id="doubles-grid">
-      <div id="top-doubles-box">
-          🥇 <span class="top-doubles">99999</span>
-          <br><br>🥈 <span class="top-doubles">99999</span>
-          <br><br>🥉 <span class="top-doubles">99999</span>
+      <div id="top-doubles" class="double-count-box">
+          🥇 <span class="double-count">99999</span>
+          <br><br>🥈 <span class="double-count">99999</span>
+          <br><br>🥉 <span class="double-count">99999</span>
+        </div>
+        <div id="worst-doubles" class="double-count-box">
+          🥇 <span class="double-count">99999</span>
+          <br><br>🥈 <span class="double-count">99999</span>
+          <br><br>🥉 <span class="double-count">99999</span>
         </div>
       <div id="doubles-graph-container" class="graph-wrapper">
         <canvas id="doubles-graph"></canvas>

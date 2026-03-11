@@ -35,7 +35,7 @@ function drawRingSector(innerR, outerR, startAngle, endAngle, color) {
 
 function drawNumbers(i,x,y) {
   ctx.fillStyle = "#fff";
-  ctx.font = "bold 24px monospace";
+  ctx.font = "bold 20px monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
@@ -77,9 +77,36 @@ function drawDartboard() {
 
 export function getDartThrow(e) {
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  const scaleX = width/rect.width;
+  const scaleY = height/rect.height;
+  const x = (e.clientX - rect.left)*scaleX;
+  const y = (e.clientY - rect.top)*scaleY;
   return {x,y}
+}
+
+export function drawMagnifier(dart) {
+  const {x,y} = dart
+  const zoom = 2
+  const size = 50
+  const offsetY = y > 120 ? 100 : 100
+
+  ctx.save()
+
+  ctx.beginPath()
+  ctx.arc(x,y-offsetY,size,0,Math.PI*2)
+  ctx.clip()
+
+  ctx.drawImage(canvas, x-size/zoom, y-size/zoom, 2*size/zoom, 2*size/zoom, x-size, y-offsetY-size, size*2, size*2);
+
+  ctx.restore()
+
+  ctx.beginPath()
+  ctx.arc(x, y - offsetY, size, 0, Math.PI * 2)
+  ctx.lineWidth = 3
+  ctx.strokeStyle = "white"
+  ctx.stroke()
+
+  drawDartMarker(x,y-offsetY)
 }
 
 export function handleDartThrow(dart, session) {
@@ -104,7 +131,7 @@ export function handleDartThrow(dart, session) {
   else if (dist > 170) {score = 0; multiplier = 0; segment = 0}
   else {multiplier = 1; segment = score}
 
-  throws.push({x, y, dx, dy, score, multiplier, segment, type:"normal", throwNo: null, visit: null, leg: gameState.leg, scoreBefore:null, scoreAfter:null, isCheckoutAttempt: false});
+  throws.push({x, y, angle, dx, dy, score, multiplier, segment, type:"normal", throwNo: null, visit: null, leg: gameState.leg, scoreBefore:null, scoreAfter:null, isCheckoutAttempt: false});
 }
 
 function drawGameScore(num=501, leg=1, throwNo=1) {
@@ -116,8 +143,8 @@ function drawGameScore(num=501, leg=1, throwNo=1) {
   ctx.fillText(`Score: ${num}`,2,1);
 
   ctx.textAlign = "right";
-  ctx.fillText(`Leg: ${leg}`,498,1);
-  ctx.fillText(`Throw: ${throwNo}`,498,25);
+  ctx.fillText(`Leg: ${leg}`,width-2,1);
+  ctx.fillText(`Throw: ${throwNo}`,width-2,25);
 }
 
 function updateGameScore(session) {
@@ -134,7 +161,7 @@ function updateGameScore(session) {
   currentThrow.visit = Math.ceil(currentLegScores.length / 3)
 
   gameState.scoreRemaining = 501 - currentLegScores.reduce((sum,t) => sum + t.score, 0);
-  currentThrow.scoreBefore = gameState.scoreRemaining + currentThrow.score;
+  currentThrow.scoreBefore = currentLegScores[currentLegScores.length-2]?.scoreAfter ?? 501;
   currentThrow.scoreAfter = gameState.scoreRemaining;
 
   let isValidCheckout = currentThrow.multiplier == 2;
@@ -142,7 +169,8 @@ function updateGameScore(session) {
     currentThrow.isCheckoutAttempt = true;
   }
   
-  drawGameScore(gameState.scoreRemaining, gameState.leg, currentLegScores.length);
+  gameState.throw = currentLegScores.length
+  drawGameScore(gameState.scoreRemaining, gameState.leg, gameState.throw);
 
   if (gameState.scoreRemaining == 0 && isValidCheckout) {
     gameState.isPaused = true;
@@ -157,13 +185,13 @@ function updateGameScore(session) {
       ctx.font = "bold 48px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("CHECKOUT",250,240);
+      ctx.fillText("CHECKOUT",width/2,height/2-10);
 
       ctx.strokeStyle = "#d4a017";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(190,260);
-      ctx.lineTo(310,260);
+      ctx.moveTo(width/2-60,height/2+10);
+      ctx.lineTo(width/2+60,height/2+10);
       ctx.stroke();
 
       btn.newLeg.removeAttribute("hidden");
@@ -180,22 +208,20 @@ function updateGameScore(session) {
       ctx.font = "bold 40px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("BUST",250,240);
+      ctx.fillText("BUST",width/2,height/2-10);
 
       ctx.strokeStyle = "#888"
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(230,258);
-      ctx.lineTo(270,258);
+      ctx.moveTo(width/2-20,height/2+8);
+      ctx.lineTo(width/2+20,height/2+8);
       ctx.stroke();
     }, 1000)
     setTimeout(() => {
       gameState.scoreRemaining = throws[throws.length-(throws.length%3||3)-1].scoreAfter
       for (let i=0; i<(throws.length%3||3); i++) {
         throws[throws.length - 1 - i].score = 0;
-        throws[throws.length - 1 - i].segment = 0;
         throws[throws.length - 1 - i].type = "bust"
-        throws[throws.length - 1 - i].scoreRemaining = gameState.scoreRemaining;
       }
       while (throws.length % 3 != 0) {
         throws.push({x:null, y:null, dx:null, dy:null, score:null, segment:"-", type:"notThrown", throwNo:null, visit:null, leg:null, scoreBefore:null, scoreAfter:null, isCheckoutAttempt: null});
@@ -250,7 +276,7 @@ export function updateSessionStats(session) {
 
   session.stats.checkout.attempts = throws.filter(t => t.isCheckoutAttempt).length
   session.stats.checkout.success = throws.filter(t => t.scoreAfter == 0).length
-  session.stats.checkout.percentage = ((session.stats.checkout.success / session.stats.checkout.attempts) * 100).toFixed(2);
+  session.stats.checkout.percentage = session.stats.checkout.attempts ? ((session.stats.checkout.success / session.stats.checkout.attempts) * 100).toFixed(2) : 0;
 
   session.stats.checkout.when.throw1.attempts = 0
   session.stats.checkout.when.visit1.attempts = 0
@@ -309,7 +335,7 @@ export function updateSessionStats(session) {
   throws.forEach(t => {
     if (!t.isCheckoutAttempt) return;
     if (t.scoreBefore == 50) session.stats.checkout.segments.BULL.attempts++;
-    else session.stats.checkout.segments[`D${t.scoreBefore/2}`].attempts++;
+    else {session.stats.checkout.segments[`D${t.scoreBefore/2}`].attempts++;}
     if (t.scoreAfter == 0) session.stats.checkout.segments[t.segment].success++
   })
 
@@ -324,7 +350,7 @@ function updateTrackerUI(session) {
   ctx.font = "bold 16px monospace";
   ctx.textBaseline = "bottom";
   ctx.textAlign = "right";
-  ctx.fillText(`Average: ${average}`,498,499);
+  ctx.fillText(`Average: ${average}`,width-2,height-1);
   if (!gameState.isGame) {ctx.textAlign = "left"; ctx.fillText(`Throws: ${totalThrows}`,2,499);}
 }
 
@@ -335,13 +361,20 @@ export function showSessionStats(session) {
   statBox[2].innerText = session.stats.basic.average
   statBox[3].innerText = session.stats.scoring.scoringAverage
 
-  const topScores = document.querySelectorAll(".top-scores");
-  const trebleCount = Object.entries(session.stats.scoring.throws).sort((a, b) => b[1] - a[1]);
+  const topScores = document.querySelectorAll(".treble-count");
+  let trebleCount = Object.entries(session.stats.scoring.throws).sort((a, b) => b[1] - a[1]);
 
   topScores[0].innerText = session.stats.scoring.visits.v180
   topScores.forEach((box, i) => {
     if (i == 0) return;
     if (i < trebleCount.length) box.innerText = `${trebleCount[i-1][0]}: ${trebleCount[i-1][1]}`;
+    else box.innerText = "";
+  });
+
+  trebleCount = Object.entries(session.stats.scoring.throws).sort((a, b) => a[1] - b[1]);
+  topScores.forEach((box, i) => {
+    if (i < 4) return;
+    if (i < trebleCount.length) box.innerText = `${trebleCount[i-4][0]}: ${trebleCount[i-4][1]}`;
     else box.innerText = "";
   });
 
@@ -353,11 +386,18 @@ export function showSessionStats(session) {
   statBox[4].innerText = session.stats.checkout.when.visit1.success + "/" + session.stats.checkout.when.visit1.attempts + " | " + (100*session.stats.checkout.when.visit1.success/session.stats.checkout.when.visit1.attempts).toFixed(0) + "%"
   statBox[5].innerText = session.stats.checkout.when.visit2.success + "/" + session.stats.checkout.when.visit2.attempts + " | " + (session.stats.checkout.when.visit2.attempts ? (100*session.stats.checkout.when.visit2.success/session.stats.checkout.when.visit2.attempts).toFixed(0) : 0) + "%"
 
-  const topDoubles = document.querySelectorAll(".top-doubles");
-  const doubleCount = Object.entries(session.stats.checkout.segments).sort((a, b) => b[1].percentage - a[1].percentage || b[1].attempts - a[1].attempts);
+  const topDoubles = document.querySelectorAll(".double-count");
+  let doubleCount = Object.entries(session.stats.checkout.segments).sort((a, b) => b[1].percentage - a[1].percentage || b[1].attempts - a[1].attempts);
 
   topDoubles.forEach((box, i) => {
     if (i < doubleCount.length) box.innerText =  `${doubleCount[i][0]}: ${doubleCount[i][1].percentage}% (${doubleCount[i][1].success}/${doubleCount[i][1].attempts})`;
+    else box.innerText = ""
+  })
+
+  doubleCount = Object.entries(session.stats.checkout.segments).sort((a, b) => a[1].percentage - b[1].percentage || a[1].attempts - b[1].attempts);
+  topDoubles.forEach((box, i) => {
+    if (i<3) return;
+    if (i < doubleCount.length) box.innerText =  `${doubleCount[i-3][0]}: ${doubleCount[i-3][1].percentage}% (${doubleCount[i-3][1].success}/${doubleCount[i-3][1].attempts})`;
     else box.innerText = ""
   })
 }
@@ -369,13 +409,20 @@ export function showAllTimeStats(longTermStats) {
   statBox[2].innerText = longTermStats.basic.average
   statBox[3].innerText = longTermStats.scoring.scoringAverage
 
-  const topScores = document.querySelectorAll(".top-scores");
-  const trebleCount = Object.entries(longTermStats.scoring.throws).sort((a, b) => b[1] - a[1] || b[1].attempts - a[1].attempts);
+  const topScores = document.querySelectorAll(".treble-count");
+  let trebleCount = Object.entries(longTermStats.scoring.throws).sort((a, b) => b[1] - a[1]);
 
   topScores[0].innerText = longTermStats.scoring.visits.v180
   topScores.forEach((box, i) => {
     if (i == 0) return;
     if (i < trebleCount.length) box.innerText = `${trebleCount[i-1][0]}: ${trebleCount[i-1][1]}`;
+    else box.innerText = "";
+  });
+
+  trebleCount = Object.entries(longTermStats.scoring.throws).sort((a, b) => a[1] - b[1]);
+  topScores.forEach((box, i) => {
+    if (i < 4) return;
+    if (i < trebleCount.length) box.innerText = `${trebleCount[i-4][0]}: ${trebleCount[i-4][1]}`;
     else box.innerText = "";
   });
 
@@ -388,11 +435,18 @@ export function showAllTimeStats(longTermStats) {
   statBox[5].innerText = longTermStats.checkout.when.visit2.success + "/" + longTermStats.checkout.when.visit2.attempts + " | " + (longTermStats.checkout.when.visit2.attempts ? (100*longTermStats.checkout.when.visit2.success/longTermStats.checkout.when.visit2.attempts).toFixed(0) : 0) + "%"
 
 
-  const topDoubles = document.querySelectorAll(".top-doubles");
-  const doubleCount = Object.entries(longTermStats.checkout.segments).sort((a, b) => b[1].percentage - a[1].percentage);
+  const topDoubles = document.querySelectorAll(".double-count");
+  let doubleCount = Object.entries(longTermStats.checkout.segments).sort((a, b) => b[1].percentage - a[1].percentage || b[1].attempts - a[1].attempts);
 
   topDoubles.forEach((box, i) => {
     if (i < doubleCount.length) box.innerText =  `${doubleCount[i][0]}: ${doubleCount[i][1].percentage}% (${doubleCount[i][1].success}/${doubleCount[i][1].attempts})`;
+    else box.innerText = ""
+  })
+
+  doubleCount = Object.entries(longTermStats.checkout.segments).sort((a, b) => a[1].percentage - b[1].percentage || a[1].attempts - b[1].attempts);
+  topDoubles.forEach((box, i) => {
+    if (i<3) return;
+    if (i < doubleCount.length) box.innerText =  `${doubleCount[i-3][0]}: ${doubleCount[i-3][1].percentage}% (${doubleCount[i-3][1].success}/${doubleCount[i-3][1].attempts})`;
     else box.innerText = ""
   })
 }
@@ -408,13 +462,11 @@ export function showQuickViewStats(player, allSessions, longTermStats) {
   const formatter = new Intl.DurationFormat("en", { style: "short" });
   const maxDurationString = {
     hours: Math.floor(maxDuration / 3600000),
-    minutes: Math.floor((maxDuration % 3600000) / 60000),
-    seconds: Math.floor((maxDuration % 60000) / 1000)
+    minutes: Math.floor((maxDuration % 3600000) / 60000)
   };
   const totalDurationString = {
     hours: Math.floor(totalDuration / 3600000),
-    minutes: Math.floor((totalDuration % 3600000) / 60000),
-    seconds: Math.floor((totalDuration % 60000) / 1000)
+    minutes: Math.floor((totalDuration % 3600000) / 60000)
   };
   
   const dates = [...new Set(allSessions.map(s => new Date(s.meta.date).toDateString()))]
@@ -437,48 +489,48 @@ export function showQuickViewStats(player, allSessions, longTermStats) {
   const diffFromToday = Math.floor((new Date() - dates[dates.length-1])/(1000*60*60*24))
   if (diffFromToday>1) currentStreak = 0;
 
+  summaryCard[0].innerHTML = `${player.name}'s All Time Stats<hr style="width:25%; margin-left:50; height:1px; border-width:0; background-color:#7c1f25">`
 
-  summaryCard[0].innerHTML = 
-  `<div class="card-meta">
-  <hr>
-  <br>Days Played: ${dates.length} ${dates.length==1?"day":"days"}
-  <br><br>Total Sessions: ${sessionCount}
-  <br><br>Longest Session: ${formatter.format(maxDurationString)}
-  <br><br>Total Play Time: ${formatter.format(totalDurationString)}
-  </div>
-  <br><hr>
-  <br><span class="card-stat">Total Legs:</span> ${longTermStats.basic.totalLegs}
-  <br><br><span class="card-stat">Total Visits:</span> ${longTermStats.basic.totalVisits}
-  <br><br><span class="card-stat">Total Throws:</span> ${longTermStats.basic.totalThrows}
-  <br><br><span class="card-stat">All Time Average:</span> ${longTermStats.basic.average}
-  <br><br><span class="card-stat">Average Darts to Finish:</span> ${(longTermStats.basic.totalThrows/longTermStats.basic.totalLegs).toFixed(1)} darts
-  <br><br><span class="card-stat">All Time Checkout %:</span> ${longTermStats.checkout.percentage}%
-  <br><br><span class="card-stat">Checkout Attempts per Leg:</span> ${(longTermStats.checkout.attempts/longTermStats.basic.totalLegs).toFixed(1)} darts
+  summaryCard[1].innerHTML = 
+  `
+  <span class="card-stat">Days Played:</span> ${dates.length} ${dates.length==1?"day":"days"}
+  <br><span class="card-stat">Play Time:</span> ${formatter.format(totalDurationString)}
   `
 
-  summaryCard[1].innerHTML = `${player.name}'s All Time Stats<hr style="width:25%; margin-left:50; height:1px; border-width:0; background-color:#7c1f25">`
+  summaryCard[3].innerHTML = 
+  `
+  ALL TIMES
+  <hr style="width:50%; margin-left:0; height:1px; border-width:0; background-color:#245e52">
+  <span class="card-stat">Darts Thrown:</span> ${longTermStats.basic.totalThrows}
+  <br><span class="card-stat">Legs Played:</span> ${longTermStats.basic.totalLegs}
+  <br><span class="card-stat">Average:</span> ${longTermStats.basic.average}
+  <br><span class="card-stat">Checkout %:</span> ${longTermStats.checkout.percentage}%
+  <br><span class="card-stat">100+ Checkouts:</span> ${longTermStats.checkout.tonPlus}
+  <br><span class="card-stat">${longTermStats.scoring.visits.highest==180?"Total 180s:":"Highest Visit:"}</span> ${longTermStats.scoring.visits.highest==180?longTermStats.scoring.visits.v180:longTermStats.scoring.visits.highest}
+  <br><span class="card-stat">${hit170?"Total 170 Checkouts:":"Highest Checkout:"}</span> ${hit170?allSessions.reduce((sum,s) => sum + s.stats.checkout.all.reduce((total,c) => {if (c==170) total++}, 0), 0):longTermStats.checkout.highest}
+  `
 
   summaryCard[2].innerHTML = 
-  `<div class="card-meta">
-  <hr>
-  <br>🔥 ${currentStreak} ${currentStreak==1?"day":"days"} :Current Streak
-  <br><br>🏆 ${longest} ${longest==1?"day":"days"} :Longest Streak
-  </div>
-  <br><hr>
-  <br>${longTermStats.milestone.bestAverage} <span class="card-stat">:Best Average</span> 
-  <br><br>${longTermStats.milestone.bestPercentage}% <span class="card-stat">:Best Checkout %</span>
-  <br><br>${hit170?allSessions.reduce((sum,s) => sum + s.stats.checkout.all.reduce((total,c) => {if (c==170) total++}, 0), 0):longTermStats.checkout.highest} <span class="card-stat">${hit170?":Total 170 Checkouts":":Highest Checkout"}</span>
-  <br><br>${longTermStats.checkout.tonPlus} <span class="card-stat">:100+ Checkouts</span>
-  <br><br>${doubleCount[0][0]} <span class="card-meta">(${doubleCount[0][1].percentage}%)</span> <span class="card-stat">:Most Successful Double</span>
-  <br><br>${trebleCount[0][0]} <span class="card-meta">(${trebleCount[0][1]} times)</span> <span class="card-stat">:Most Hit Treble</span>
-  <br><br>${longTermStats.milestone.shortestLeg} throws <span class="card-stat">:Shortest Leg</span>
-  <br><br>${longTermStats.scoring.visits.highest==180?longTermStats.scoring.visits.v180:longTermStats.scoring.visits.highest} <span class="card-stat">${longTermStats.scoring.visits.highest==180?":Total 180s":":Highest Visit"}</span>
+  `
+  🔥 ${currentStreak} ${currentStreak==1?"day":"days"} <span class="card-stat">:Current Streak</span>
+  <br>🏆 ${longest} ${longest==1?"day":"days"} <span class="card-stat">:Longest Streak</span>
+  `
+
+  summaryCard[4].innerHTML = 
+  `
+  BESTS
+  <hr style="width:50%; margin-right:0; height:1px; border-width:0; background-color:#245e52">
+  ${longTermStats.milestone.bestAverage} <span class="card-stat">:Average</span> 
+  <br>${longTermStats.milestone.bestPercentage}% <span class="card-stat">:Checkout %</span>
+  <br>${doubleCount[0][0]} <span class="card-meta">(${doubleCount[0][1].percentage}%)</span> <span class="card-stat">:Double</span>
+  <br>${trebleCount[0][0]} <span class="card-meta">(x${trebleCount[0][1]})</span> <span class="card-stat">:Treble</span>
+  <br>${longTermStats.milestone.shortestLeg} darts <span class="card-stat">:Shortest Leg</span>
   `
 }
 
 export function showSessionSummary(player, session, allSessions) {
   const s = session.stats
-  const sessionCard = document.getElementById("session-card")
+  const sessionCard = document.querySelectorAll(".session-card")
   const sessionCount = allSessions.filter(s => s.raw.throws.length > 0).length
   const formatter = new Intl.DurationFormat("en", { style: "short" });
   const duration = {
@@ -502,28 +554,70 @@ export function showSessionSummary(player, session, allSessions) {
     else break
   }
   const legs = s.basic.throwsPerLeg.length
-  
-  sessionCard.innerHTML = 
+  const targetT20 = t => t.type == "normal" && [20, 5, 1, 12, 18, 9, 4].includes((t.score/t.multiplier)) && t.scoreBefore > 160
+  const allT20Throws = session.raw.throws.filter(targetT20)
+  const dxT20 = allT20Throws.reduce((sum,t) => sum+t.dx,0)/allT20Throws.length
+  const dyT20 = 103 + allT20Throws.reduce((sum,t) => sum+t.dy,0)/allT20Throws.length
+  const dxT20Adjusted = dxT20>0 ? allT20Throws.filter(t=>t.dx>0).reduce((sum,t) => sum+Math.abs(t.dx),0)/allT20Throws.filter(t=>t.dx>0).length : allT20Throws.filter(t=>t.dx<0).reduce((sum,t) => sum+Math.abs(t.dx),0)/allT20Throws.filter(t=>t.dx<0).length
+  const dyT20Adjusted = dyT20>0 ? allT20Throws.filter(t=>t.dy>-103).reduce((sum,t) => sum+Math.abs(t.dy),0)/allT20Throws.filter(t=>t.dy>-103).length : allT20Throws.filter(t=>t.dy<-103).reduce((sum,t) => sum+Math.abs(t.dy),0)/allT20Throws.filter(t=>t.dy<-103).length
+  const groupingDistance = allT20Throws.reduce((sum,t) => sum + allT20Throws.reduce((visitSum, ot) => visitSum + Math.sqrt((t.dx - ot.dx)**2 + (t.dy - ot.dy)**2), 0), 0) / (allT20Throws.length * allT20Throws.length)
+
+  const visits = {};
+  allT20Throws.forEach(t => {if (!visits[t.visitNo]) visits[t.visitNo] = []; visits[t.visitNo].push(t);});
+  function visitGroupingScore(throws) {
+    if (throws.length === 0) return 0;
+    const cx = throws.reduce((sum, t) => sum + t.dx, 0) / throws.length;
+    const cy = throws.reduce((sum, t) => sum + t.dy, 0) / throws.length;
+    const avgDistance = throws.reduce((sum, t) => sum + Math.hypot(t.dx - cx, t.dy - cy), 0) / throws.length;
+    return avgDistance;
+  }
+  const visitDistances = Object.values(visits).map(visitGroupingScore);
+  const averageGroupingDistance = visitDistances.reduce((sum, d) => sum + d, 0) / visitDistances.length;
+  const groupingScore = Math.max(0, Math.min(10, 10 * (1 - Math.pow((Math.max(0, 0.3 * groupingDistance + 0.7 * averageGroupingDistance - 8)) / 100, 0.8))));
+
+  sessionCard[0].innerHTML = 
   `<div class="card-meta">
-  Name: ${player.name}
-  <br>Session: ${sessionCount}
-  <br>Streak: ${currentStreak} ${currentStreak==1?"day":"days"}
-  <br>Date: ${d.toLocaleDateString()}
-  <br>Time: ${time}
+  Session: ${sessionCount}
   <br>Duration: ${formatter.format(duration)}
-  </div>
-  <hr style="border-width:0; height:0.75px; width:75%; margin-left:0; background-color:gray;">
-  <div id="session-summary">
-  <br><span class="card-stat">Legs Played:</span> ${legs}
-  <br><br><span class="card-stat">Throws:</span> ${s.basic.totalThrows}
-  <br><br><span class="card-stat">Visits:</span> ${s.basic.totalVisits}
-  <br><br><span class="card-stat">Average:</span> ${s.basic.average}
-  <br><br><span class="card-stat">171+ visits:</span> ${s.scoring.visits.v171}
-  <br><br><span class="card-stat">Highest visit:</span> ${Math.max(...session.raw.visits)}
-  <br><br><span class="card-stat">Checkout %:</span> ${s.checkout.percentage}%
-  <br><br><span class="card-stat">Highest Checkout:</span> ${s.checkout.highest}
-  </div>
   `
+
+  sessionCard[1].innerHTML = 
+  `<div class="card-meta">
+  Date: ${d.toLocaleDateString()}
+  <br>Time: ${time}
+  `
+
+  sessionCard[2].innerHTML = 
+  `
+  SUMMARY
+  <hr style="width:50%; margin-left:0; height:1px; border-width:0; background-color:#aaa">
+  <span class="card-stat">Legs Played:</span> ${legs}
+  <br><span class="card-stat">Throws:</span> ${s.basic.totalThrows}
+  <br><span class="card-stat">Visits:</span> ${s.basic.totalVisits}
+  <br><span class="card-stat">Average:</span> ${s.basic.average}
+  <br><span class="card-stat">171+ visits:</span> ${s.scoring.visits.v171}
+  <br><span class="card-stat">Checkout %:</span> ${s.checkout.percentage}%
+  <br><span class="card-stat">Highest Checkout:</span> ${s.checkout.highest}
+  `
+
+  sessionCard[3].innerHTML = 
+  `
+  GROUPING
+  <hr style="width:50%; margin-right:0; height:1px; border-width:0; background-color:#aaa">
+  <span class="card-stat">Overall:</span> ${groupingDistance.toFixed(0)}mm 
+  <br><span class="card-stat">Visit:</span> ${averageGroupingDistance.toFixed(0)}mm
+  <br><span class="card-stat">Score:</span> ${groupingScore.toFixed(1)}/10
+  <br><br>CONSISTENCY
+  <hr style="width:50%; margin-right:0; height:1px; border-width:0; background-color:#aaa">
+  <span class="card-stat">Best visit:</span> ${Math.max(...session.raw.visits)}
+  <br><span class="card-stat">Worst visit:</span> ${Math.min(...session.raw.visits.filter(v=>v>0))}
+  `
+
+  sessionCard[4].innerHTML = 
+  `
+  <span class="card-stat">T20 Miss Pattern Tip: ${Math.ceil(dxT20Adjusted)}mm too ${dxT20>0?"right":"left"} / ${Math.ceil(dyT20Adjusted)}mm too ${dyT20>0?"low":"high"}</span>
+  `
+
 }
 
 function drawDartMarker(x,y,current=false) {
@@ -559,7 +653,7 @@ function lastThreeThrows(session) {
   currentVisit
   .filter(normalThrow)
   .forEach((t,i,arr) => 
-    drawDartMarker(t.x, t.y, i == arr.length - 1));
+    drawDartMarker(center.x+t.dx, center.y+t.dy, i == arr.length - 1));
 
   currentVisit
   .forEach((t,i) => 
@@ -568,11 +662,18 @@ function lastThreeThrows(session) {
   scoreBox[currentThrowOfVisit - 1].toggleAttribute("data-current");
 }
 
+export function redrawCanvas(gameState, session) {
+  drawDartboard()
+  drawGameScore(gameState.scoreRemaining, gameState.leg, gameState.throw)
+  updateTrackerUI(session)
+  lastThreeThrows(session)
+}
+
 export function init(session) {
   drawDartboard();
   updateSessionStats(session);
   updateTrackerUI(session);
-  if (gameState.isGame) {drawGameScore(), gameState.leg = 1};
+  if (gameState.isGame) {drawGameScore(), gameState.leg = 1, gameState.throw = 0};
 }
 
 export function update(session) {

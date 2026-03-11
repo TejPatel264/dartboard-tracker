@@ -1,16 +1,17 @@
 
 import { btn } from "./buttons.js"
 import { database, createPlayer, createSession } from "./database.js"
-import { appState, gameState} from "./states.js";
+import { appState, gameState } from "./states.js";
 import { init, update } from "./logic.js";
-import { getDartThrow, handleDartThrow, updateSessionStats } from "./logic.js";
+import { redrawCanvas, getDartThrow, drawMagnifier, handleDartThrow, updateSessionStats } from "./logic.js";
 import { calculateLongTermStats } from "./stats.js";
 import { showQuickViewStats, showSessionStats, showAllTimeStats, showSessionSummary } from "./logic.js";
 import { chartStyles, createBarChart, updateBarChart, createHeatmap, createLineChart, updateLineChart } from "./charts.js";
 import { showSummaryStatView, showSessionStatView, showScoringStatView, showDoublingStatView, toTracker } from "./statsviews.js";
 
 let {canvas,} = appState;
-let session
+let dart;
+let session;
 let throwGraph;
 let visitGraph;
 let doublesGraph;
@@ -35,23 +36,37 @@ const summaryTitle = document.querySelector("#stats h2");
 
 for (let session of allSessions) {
   updateSessionStats(session);
+  //if (session.stats.checkout.percentage == "NaN") session.stats.checkout.percentage = 0
   database.sessions.put(session)
 }
 
 
 createPlayer()
 const player = await database.player.get("local");
-if (player) summaryTitle.innerText = `${player.name}'s Stats`;
 
 await database.sessions.filter(s => s.raw.throws.length <= 3).delete();
+canvas.style.touchAction = "none"
 
 chartStyles();
 
 // THROW TRACKER
 
-canvas.addEventListener("click", (e) => {
+canvas.addEventListener("pointerdown", (e) => {
   if (gameState.isPaused) return;
-  const dart = getDartThrow(e);
+  dart = getDartThrow(e)
+  drawMagnifier(dart)
+})
+
+canvas.addEventListener("pointermove", (e) => {
+  if (gameState.isPaused) return;
+  dart = getDartThrow(e)
+  redrawCanvas(gameState, session)
+  drawMagnifier(dart)
+})
+
+canvas.addEventListener("pointerup", (e) => {
+  if (gameState.isPaused) return;
+  dart = getDartThrow(e);
   handleDartThrow(dart, session);
   update(session);
   session.meta.duration = Date.now() - session.meta.date;
@@ -155,6 +170,7 @@ btn.backToHomeFromTracker.addEventListener("click", () => {
     ctx.clearRect(0,0,c.width,c.height)
     if (throwGraph) throwGraph.destroy();
     if (visitGraph) visitGraph.destroy();
+    if (doublesGraph) doublesGraph.destroy();
     })}, {once: true}
   );
 })
@@ -209,6 +225,7 @@ btn.backToHomeFromStats.addEventListener("click", () => {
     document.querySelectorAll(".stat-view").forEach(view => view.removeAttribute("show"));
     if (throwGraph && gameState.isGame) throwGraph.destroy();
     if (visitGraph && gameState.isGame) visitGraph.destroy();
+    if (doublesGraph && gameState.isGame) doublesGraph.destroy();
     btn.backToTracker.removeAttribute("hidden");
     page.style.transition = "transform 0.7s cubic-bezier(0.3,0.2,0.2,1)"
   }, {once: true});
