@@ -2,15 +2,16 @@ import { appState, gameState } from "./states.js"
 import { btn } from "./buttons.js"
 
 let { canvas, ctx, width, height, center, } = appState
+//center.y += 25
 
 const sectorScores = [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
 
-function drawCircle(r,w=1,fill="rgb(0,0,0,0)") {
+function drawCircle(r,w=1,fill="rgb(0,0,0,0)",stroke="#c0c0c0",centerx=center.x,centery=center.y) {
     ctx.fillStyle = fill;
     ctx.beginPath();
-    ctx.arc(center.x, center.y, r, 0, Math.PI*2);
+    ctx.arc(centerx, centery, r, 0, Math.PI*2);
     ctx.fill();
-    ctx.strokeStyle = "#c0c0c0";
+    ctx.strokeStyle = stroke;
     ctx.lineWidth = w;
     ctx.stroke();
 }
@@ -24,13 +25,13 @@ function drawLine(startx,starty,endx,endy) {
   ctx.stroke();
 }
 
-function drawRingSector(innerR, outerR, startAngle, endAngle, color) {
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, outerR, startAngle, endAngle);
-    ctx.arc(center.x, center.y, innerR, endAngle, startAngle, true);
-    ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill()
+function drawRingSector(innerR, outerR, startAngle, endAngle, color, c=ctx) {
+    c.beginPath();
+    c.arc(center.x, center.y, outerR, startAngle, endAngle);
+    c.arc(center.x, center.y, innerR, endAngle, startAngle, true);
+    c.closePath();
+    c.fillStyle = color;
+    c.fill()
 }
 
 function drawNumbers(i,x,y) {
@@ -44,6 +45,8 @@ function drawNumbers(i,x,y) {
 
 function drawDartboard() {
   ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#ddd";
+  ctx.fillRect(0,0,width,height+50);
   drawCircle(225.5, 2,"#222")
   for (let i=0; i<20; i++) {
     let angle = (i+1/2) * (Math.PI/10);
@@ -80,33 +83,87 @@ export function getDartThrow(e) {
   const scaleX = width/rect.width;
   const scaleY = height/rect.height;
   const x = (e.clientX - rect.left)*scaleX;
-  const y = (e.clientY - rect.top)*scaleY;
+  const y = (e.clientY - rect.top)*scaleY - 25;
   return {x,y}
 }
 
 export function drawMagnifier(dart) {
   const {x,y} = dart
+  const dx = x - center.x;
+  const dy = y - center.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  let angle = Math.atan2(dy, dx);
+  while (angle < -11*Math.PI/20) angle += 2*Math.PI;
+  const sector = Math.floor((angle + 11*Math.PI/20) / (Math.PI/10));
+  let sectorAngle = (Math.round(angle / (Math.PI/10)) - 1/2) * Math.PI/10;
   const zoom = 2
-  const size = 50
-  const offsetY = y > 120 ? 100 : 100
+  let size = 50
+  let offsetY = 100
+  let offsetX = 0
+
+  //if (dist > 16 && dist < 200) drawRingSector(16, 170, sectorAngle, sectorAngle+Math.PI/10, "#ffffff77");
+
+  if(dist > 275) return;
 
   ctx.save()
 
+  if (y-offsetY-size < 0) {
+    offsetY = y - size
+    if (x < 200) offsetX = Math.min(150, (offsetY - 100) * Math.sqrt(Math.PI))
+    else offsetX = Math.min(150, (100 - offsetY) * Math.sqrt(Math.PI))
+  }
+
+  if (x-offsetX-size < 0) offsetX = x - size
+  if (x-offsetX+size > width) offsetX = x + size - width
+
+
   ctx.beginPath()
-  ctx.arc(x,y-offsetY,size,0,Math.PI*2)
+  ctx.arc(x-offsetX,y-offsetY,size,0,Math.PI*2)
   ctx.clip()
 
-  ctx.drawImage(canvas, x-size/zoom, y-size/zoom, 2*size/zoom, 2*size/zoom, x-size, y-offsetY-size, size*2, size*2);
+  ctx.drawImage(canvas, x-size/zoom, y-size/zoom, 2*size/zoom, 2*size/zoom, x-offsetX-size, y-offsetY-size, size*2, size*2);
 
   ctx.restore()
 
+  drawCircle(size, 3, "#11111177", "#777", x-offsetX, y-offsetY)
+
+  const grad = ctx.createRadialGradient(x-offsetX-size*0.25,y-offsetY-size*0.25,5,x-offsetX,y-offsetY,size)
+  grad.addColorStop(0,"rgba(255,255,255,0.25)")
+  grad.addColorStop(1,"rgba(255,255,255,0)")
   ctx.beginPath()
-  ctx.arc(x, y - offsetY, size, 0, Math.PI * 2)
-  ctx.lineWidth = 3
-  ctx.strokeStyle = "white"
+  ctx.arc(x-offsetX,y-offsetY,size,0,Math.PI*2)
+  ctx.fillStyle = grad
+  ctx.fill()
+
+  ctx.font = "bold 20px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  let mult = "";
+  if (dist>99 && dist<107) mult="T"
+  else if (dist>162 && dist<170) mult="D"
+  const text = mult + sectorScores[sector]
+  ctx.fillStyle = "#eeeeeeaa";
+  if (dist > 16 && dist < 250) ctx.fillText(text,x-offsetX,y-offsetY+size*0.9);
+  else if (dist <= 16) ctx.fillText(dist<6.35 ?"BULL":25,x-offsetX,y-offsetY+size*0.9);
+
+  //drawDartMarker(x-offsetX,y-offsetY,false,5,"#ccc")
+
+  size = 8
+  ctx.strokeStyle = "#eee";
+  ctx.lineWidth = 1.5;
+
+  ctx.beginPath();
+  ctx.moveTo(x-offsetX-size,y-offsetY-size);
+  ctx.lineTo(x-offsetX-3,y-offsetY-3);
+  ctx.moveTo(x-offsetX+3,y-offsetY+3);
+  ctx.lineTo(x-offsetX+size,y-offsetY+size);
+  ctx.moveTo(x-offsetX+size,y-offsetY-size);
+  ctx.lineTo(x-offsetX+3,y-offsetY-3);
+  ctx.moveTo(x-offsetX-3,y-offsetY+3);
+  ctx.lineTo(x-offsetX-size,y-offsetY+size);
   ctx.stroke()
 
-  drawDartMarker(x,y-offsetY)
+  drawCircle(0.75,1,"aaa","aaa",x-offsetX,y-offsetY)
 }
 
 export function handleDartThrow(dart, session) {
@@ -131,20 +188,20 @@ export function handleDartThrow(dart, session) {
   else if (dist > 170) {score = 0; multiplier = 0; segment = 0}
   else {multiplier = 1; segment = score}
 
-  throws.push({x, y, angle, dx, dy, score, multiplier, segment, type:"normal", throwNo: null, visit: null, leg: gameState.leg, scoreBefore:null, scoreAfter:null, isCheckoutAttempt: false});
+  throws.push({x, y, angle, dist, dx, dy, score, multiplier, segment, type:"normal", throwNo: null, visit: null, leg: gameState.leg, scoreBefore:null, scoreAfter:null, isCheckoutAttempt: false});
 }
 
 function drawGameScore(num=501, leg=1, throwNo=1) {
   ctx.fillStyle = "#111";
-  ctx.font = "bold 20px monospace";
+  ctx.font = "bold 24px monospace";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
 
-  ctx.fillText(`Score: ${num}`,2,1);
+  ctx.fillText(`Score: ${num}`,2,2);
 
   ctx.textAlign = "right";
-  ctx.fillText(`Leg: ${leg}`,width-2,1);
-  ctx.fillText(`Throw: ${throwNo}`,width-2,25);
+  ctx.fillText(`Leg: ${leg}`,width-2,2);
+  ctx.fillText(`Throw: ${throwNo}`,width-2,30);
 }
 
 function updateGameScore(session) {
@@ -161,11 +218,11 @@ function updateGameScore(session) {
   currentThrow.visit = Math.ceil(currentLegScores.length / 3)
 
   gameState.scoreRemaining = 501 - currentLegScores.reduce((sum,t) => sum + t.score, 0);
-  currentThrow.scoreBefore = currentLegScores[currentLegScores.length-2]?.scoreAfter ?? 501;
+  currentThrow.scoreBefore = gameState.scoreRemaining + currentThrow.score;
   currentThrow.scoreAfter = gameState.scoreRemaining;
 
   let isValidCheckout = currentThrow.multiplier == 2;
-  if ((currentThrow.scoreBefore == 50 && currentLegScores.length % 3 == 0) || (currentThrow.scoreBefore <= 40 && currentThrow.scoreBefore % 2 == 0)) {
+  if ((currentThrow.scoreBefore == 50 && currentLegScores.length % 3 == 0 && currentThrow.dist < 49) || (currentThrow.scoreBefore <= 40 && currentThrow.scoreBefore % 2 == 0)) {
     currentThrow.isCheckoutAttempt = true;
   }
   
@@ -178,20 +235,19 @@ function updateGameScore(session) {
     session.stats.basic.totalLegs = session.stats.basic.throwsPerLeg.length
     session.stats.checkout.highest = Math.max(session.stats.checkout.highest, throws[throws.length-(throws.length%3||3)-1].scoreAfter);
     setTimeout(() => {
-      canvas.style.cursor = "default";
       ctx.fillStyle = "rgb(0,0,0,0.75)"
       ctx.fillRect(0,0,width,height);
       ctx.fillStyle = "#f5f5f5";
       ctx.font = "bold 48px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("CHECKOUT",width/2,height/2-10);
+      ctx.fillText("CHECKOUT",center.x,center.y-10);
 
       ctx.strokeStyle = "#d4a017";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(width/2-60,height/2+10);
-      ctx.lineTo(width/2+60,height/2+10);
+      ctx.moveTo(center.x-60,center.y+10);
+      ctx.lineTo(center.x+60,center.y+10);
       ctx.stroke();
 
       btn.newLeg.removeAttribute("hidden");
@@ -201,20 +257,19 @@ function updateGameScore(session) {
   if (gameState.scoreRemaining < 0 || gameState.scoreRemaining == 1 || (gameState.scoreRemaining == 0 && !isValidCheckout)) {
     gameState.isPaused = true;
     setTimeout(() => {
-      canvas.style.cursor = "default";
       ctx.fillStyle = "rgb(0,0,0,0.85)"
       ctx.fillRect(0,0,width,height);
       ctx.fillStyle = "#ddd";
       ctx.font = "bold 40px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("BUST",width/2,height/2-10);
+      ctx.fillText("BUST",center.x,center.y-10);
 
       ctx.strokeStyle = "#888"
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(width/2-20,height/2+8);
-      ctx.lineTo(width/2+20,height/2+8);
+      ctx.moveTo(center.x-20,center.y+8);
+      ctx.lineTo(center.x+20,center.y+8);
       ctx.stroke();
     }, 1000)
     setTimeout(() => {
@@ -228,7 +283,6 @@ function updateGameScore(session) {
       }
       update(session);
       gameState.isPaused = false;
-      canvas.style.cursor = "crosshair";
     }, 2500);
   }
 }
@@ -297,6 +351,7 @@ export function updateSessionStats(session) {
     session.stats.checkout.all.push(leg[leg.length-(leg.length%3||3)-1].scoreAfter);
     if (leg[leg.length-(leg.length%3||3)-1].scoreAfter >= 100) session.stats.checkout.tonPlus++;
     const checkoutThrows = leg.filter(t => t.isCheckoutAttempt);
+    if (checkoutThrows.length == 0) return;
     session.stats.checkout.when.throw1.attempts++;
     session.stats.checkout.when.visit1.attempts++;
     if (checkoutThrows.length == 1) session.stats.checkout.when.throw1.success++
@@ -335,8 +390,8 @@ export function updateSessionStats(session) {
   throws.forEach(t => {
     if (!t.isCheckoutAttempt) return;
     if (t.scoreBefore == 50) session.stats.checkout.segments.BULL.attempts++;
-    else {session.stats.checkout.segments[`D${t.scoreBefore/2}`].attempts++;}
-    if (t.scoreAfter == 0) session.stats.checkout.segments[t.segment].success++
+    else session.stats.checkout.segments[`D${t.scoreBefore/2}`].attempts++;
+    if (t.scoreAfter == 0 && t.multiplier == 2) session.stats.checkout.segments[t.segment].success++;
   })
 
   Object.values(session.stats.checkout.segments).forEach(s => s.percentage = s.attempts ? ((s.success / s.attempts) * 100).toFixed(0) : 0)
@@ -347,11 +402,11 @@ function updateTrackerUI(session) {
   const average = session.stats.basic.average
   
   ctx.fillStyle = "#111";
-  ctx.font = "bold 16px monospace";
+  ctx.font = "bold 20px monospace";
   ctx.textBaseline = "bottom";
   ctx.textAlign = "right";
-  ctx.fillText(`Average: ${average}`,width-2,height-1);
-  if (!gameState.isGame) {ctx.textAlign = "left"; ctx.fillText(`Throws: ${totalThrows}`,2,499);}
+  ctx.fillText(`Average: ${average}`,width-2,height-2);
+  if (!gameState.isGame) {ctx.textAlign = "left"; ctx.fillText(`Throws: ${totalThrows}`,2,height-1);}
 }
 
 export function showSessionStats(session) {
@@ -378,6 +433,10 @@ export function showSessionStats(session) {
     else box.innerText = "";
   });
 
+  const topDoublesTable = document.getElementById("top-doubles-table")
+  topDoublesTable.innerHTML = ""
+  const worstDoublesTable = document.getElementById("worst-doubles-table")
+  worstDoublesTable.innerHTML = ""
   statBox = document.querySelectorAll("#view-doubling .stat-box")
   statBox[0].innerText = session.stats.checkout.attempts
   statBox[1].innerText = session.stats.checkout.success
@@ -393,6 +452,33 @@ export function showSessionStats(session) {
     if (i < doubleCount.length) box.innerText =  `${doubleCount[i][0]}: ${doubleCount[i][1].percentage}% (${doubleCount[i][1].success}/${doubleCount[i][1].attempts})`;
     else box.innerText = ""
   })
+  topDoublesTable.innerHTML = 
+  `
+  <div class="stats-names">
+  <div class="stat" style="background-color: #007a3d;">BEST</div>
+  <div class="stat" style="background-color: #196b3a;">${doubleCount[0][0]}</div>
+  <div class="stat" style="background-color: #335c36;">${doubleCount[1][0]}</div>
+  <div class="stat" style="background-color: #4c4d33;">${doubleCount[2][0]}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #007a3daa; color: #ccc; font-size: small; border: 1px solid #007a3daa;">Attempts</div>
+  <div class="stat-box">${doubleCount[0][1].attempts}</div>
+  <div class="stat-box">${doubleCount[1][1].attempts}</div>
+  <div class="stat-box">${doubleCount[2][1].attempts}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #007a3daa; color: #ccc; font-size: small; border: 1px solid #007a3daa;">Hits</div>
+  <div class="stat-box">${doubleCount[0][1].success}</div>
+  <div class="stat-box">${doubleCount[1][1].success}</div>
+  <div class="stat-box">${doubleCount[2][1].success}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #007a3daa; color: #ccc; font-size: small; border: 1px solid #007a3daa;">%</div>
+  <div class="stat-box">${doubleCount[0][1].percentage}%</div>
+  <div class="stat-box">${doubleCount[1][1].percentage}%</div>
+  <div class="stat-box">${doubleCount[2][1].percentage}%</div>
+  </div>
+  `
 
   doubleCount = Object.entries(session.stats.checkout.segments).sort((a, b) => a[1].percentage - b[1].percentage || a[1].attempts - b[1].attempts);
   topDoubles.forEach((box, i) => {
@@ -400,6 +486,34 @@ export function showSessionStats(session) {
     if (i < doubleCount.length) box.innerText =  `${doubleCount[i-3][0]}: ${doubleCount[i-3][1].percentage}% (${doubleCount[i-3][1].success}/${doubleCount[i-3][1].attempts})`;
     else box.innerText = ""
   })
+
+  worstDoublesTable.innerHTML = 
+  `
+  <div class="stats-names">
+  <div class="stat" style="background-color: #b11226;">WORST</div>
+  <div class="stat" style="background-color: #982129;">${doubleCount[0][0]}</div>
+  <div class="stat" style="background-color: #7e302d;">${doubleCount[1][0]}</div>
+  <div class="stat" style="background-color: #653f30;">${doubleCount[2][0]}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #b11226aa; color: #ccc; font-size: small; border: 1px solid #b11226aa;">Attempts</div>
+  <div class="stat-box">${doubleCount[0][1].attempts}</div>
+  <div class="stat-box">${doubleCount[1][1].attempts}</div>
+  <div class="stat-box">${doubleCount[2][1].attempts}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #b11226aa; color: #ccc; font-size: small; border: 1px solid #b11226aa;">Hits</div>
+  <div class="stat-box">${doubleCount[0][1].success}</div>
+  <div class="stat-box">${doubleCount[1][1].success}</div>
+  <div class="stat-box">${doubleCount[2][1].success}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #b11226aa; color: #ccc; font-size: small; border: 1px solid #b11226aa;">%</div>
+  <div class="stat-box">${doubleCount[0][1].percentage}%</div>
+  <div class="stat-box">${doubleCount[1][1].percentage}%</div>
+  <div class="stat-box">${doubleCount[2][1].percentage}%</div>
+  </div>
+  `
 }
 
 export function showAllTimeStats(longTermStats) {
@@ -426,6 +540,10 @@ export function showAllTimeStats(longTermStats) {
     else box.innerText = "";
   });
 
+  const topDoublesTable = document.getElementById("top-doubles-table")
+  topDoublesTable.innerHTML = ""
+  const worstDoublesTable = document.getElementById("worst-doubles-table")
+  worstDoublesTable.innerHTML = ""
   statBox = document.querySelectorAll("#view-doubling .stat-box")
   statBox[0].innerText = longTermStats.checkout.attempts
   statBox[1].innerText = longTermStats.checkout.success
@@ -442,13 +560,67 @@ export function showAllTimeStats(longTermStats) {
     if (i < doubleCount.length) box.innerText =  `${doubleCount[i][0]}: ${doubleCount[i][1].percentage}% (${doubleCount[i][1].success}/${doubleCount[i][1].attempts})`;
     else box.innerText = ""
   })
+  topDoublesTable.innerHTML = 
+  `
+  <div class="stats-names">
+  <div class="stat" style="background-color: #007a3d;">BEST</div>
+  <div class="stat" style="background-color: #196b3a;">${doubleCount[0][0]}</div>
+  <div class="stat" style="background-color: #335c36;">${doubleCount[1][0]}</div>
+  <div class="stat" style="background-color: #4c4d33;">${doubleCount[2][0]}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #007a3daa; color: #ccc; font-size: small; border: 1px solid #007a3daa;">Attempts</div>
+  <div class="stat-box">${doubleCount[0][1].attempts}</div>
+  <div class="stat-box">${doubleCount[1][1].attempts}</div>
+  <div class="stat-box">${doubleCount[2][1].attempts}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #007a3daa; color: #ccc; font-size: small; border: 1px solid #007a3daa;">Hits</div>
+  <div class="stat-box">${doubleCount[0][1].success}</div>
+  <div class="stat-box">${doubleCount[1][1].success}</div>
+  <div class="stat-box">${doubleCount[2][1].success}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #007a3daa; color: #ccc; font-size: small; border: 1px solid #007a3daa;">%</div>
+  <div class="stat-box">${doubleCount[0][1].percentage}%</div>
+  <div class="stat-box">${doubleCount[1][1].percentage}%</div>
+  <div class="stat-box">${doubleCount[2][1].percentage}%</div>
+  </div>
+  `
 
-  doubleCount = Object.entries(longTermStats.checkout.segments).sort((a, b) => a[1].percentage - b[1].percentage || a[1].attempts - b[1].attempts);
+  doubleCount = Object.entries(longTermStats.checkout.segments).sort((a, b) => a[1].percentage - b[1].percentage || b[1].attempts - a[1].attempts);
   topDoubles.forEach((box, i) => {
     if (i<3) return;
     if (i < doubleCount.length) box.innerText =  `${doubleCount[i-3][0]}: ${doubleCount[i-3][1].percentage}% (${doubleCount[i-3][1].success}/${doubleCount[i-3][1].attempts})`;
     else box.innerText = ""
   })
+  worstDoublesTable.innerHTML = 
+  `
+  <div class="stats-names">
+  <div class="stat" style="background-color: #b11226;">WORST</div>
+  <div class="stat" style="background-color: #982129;">${doubleCount[0][0]}</div>
+  <div class="stat" style="background-color: #7e302d;">${doubleCount[1][0]}</div>
+  <div class="stat" style="background-color: #653f30;">${doubleCount[2][0]}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #b11226aa; color: #ccc; font-size: small; border: 1px solid #b11226aa;">Attempts</div>
+  <div class="stat-box">${doubleCount[0][1].attempts}</div>
+  <div class="stat-box">${doubleCount[1][1].attempts}</div>
+  <div class="stat-box">${doubleCount[2][1].attempts}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #b11226aa; color: #ccc; font-size: small; border: 1px solid #b11226aa;">Hits</div>
+  <div class="stat-box">${doubleCount[0][1].success}</div>
+  <div class="stat-box">${doubleCount[1][1].success}</div>
+  <div class="stat-box">${doubleCount[2][1].success}</div>
+  </div>
+  <div class="stats-numbers">
+  <div class="stat-box" style="background-color: #b11226aa; color: #ccc; font-size: small; border: 1px solid #b11226aa;">%</div>
+  <div class="stat-box">${doubleCount[0][1].percentage}%</div>
+  <div class="stat-box">${doubleCount[1][1].percentage}%</div>
+  <div class="stat-box">${doubleCount[2][1].percentage}%</div>
+  </div>
+  `
 }
 
 export function showQuickViewStats(player, allSessions, longTermStats) {
@@ -500,7 +672,7 @@ export function showQuickViewStats(player, allSessions, longTermStats) {
   summaryCard[3].innerHTML = 
   `
   ALL TIMES
-  <hr style="width:50%; margin-left:0; height:1px; border-width:0; background-color:#245e52">
+  <hr style="width:50%; height:1px; border-width:0; background-color:#245e52">
   <span class="card-stat">Darts Thrown:</span> ${longTermStats.basic.totalThrows}
   <br><span class="card-stat">Legs Played:</span> ${longTermStats.basic.totalLegs}
   <br><span class="card-stat">Average:</span> ${longTermStats.basic.average}
@@ -512,19 +684,19 @@ export function showQuickViewStats(player, allSessions, longTermStats) {
 
   summaryCard[2].innerHTML = 
   `
-  🔥 ${currentStreak} ${currentStreak==1?"day":"days"} <span class="card-stat">:Current Streak</span>
-  <br>🏆 ${longest} ${longest==1?"day":"days"} <span class="card-stat">:Longest Streak</span>
+  🔥 <span class="card-stat">Current Streak: </span>${currentStreak} ${currentStreak==1?"day":"days"}
+  <br>🏆 <span class="card-stat">Longest Streak:</span>${longest} ${longest==1?"day":"days"}
   `
 
   summaryCard[4].innerHTML = 
   `
   BESTS
-  <hr style="width:50%; margin-right:0; height:1px; border-width:0; background-color:#245e52">
-  ${longTermStats.milestone.bestAverage} <span class="card-stat">:Average</span> 
-  <br>${longTermStats.milestone.bestPercentage}% <span class="card-stat">:Checkout %</span>
-  <br>${doubleCount[0][0]} <span class="card-meta">(${doubleCount[0][1].percentage}%)</span> <span class="card-stat">:Double</span>
-  <br>${trebleCount[0][0]} <span class="card-meta">(x${trebleCount[0][1]})</span> <span class="card-stat">:Treble</span>
-  <br>${longTermStats.milestone.shortestLeg} darts <span class="card-stat">:Shortest Leg</span>
+  <hr style="width:50%; height:1px; border-width:0; background-color:#245e52">
+  <span class="card-stat">Average:</span> ${longTermStats.milestone.bestAverage}
+  <br><span class="card-stat">Checkout %: </span>${longTermStats.milestone.bestPercentage}%
+  <br><span class="card-stat">Double:</span> ${doubleCount[0][0]} <span class="card-meta">(${doubleCount[0][1].percentage}%)</span>
+  <br><span class="card-stat">Treble:</span> ${trebleCount[0][0]} <span class="card-meta">(x${trebleCount[0][1]})</span> 
+  <br><span class="card-stat">Best Leg:</span> ${longTermStats.milestone.shortestLeg} darts
   `
 }
 
@@ -559,7 +731,7 @@ export function showSessionSummary(player, session, allSessions) {
   const dxT20 = allT20Throws.reduce((sum,t) => sum+t.dx,0)/allT20Throws.length
   const dyT20 = 103 + allT20Throws.reduce((sum,t) => sum+t.dy,0)/allT20Throws.length
   const dxT20Adjusted = dxT20>0 ? allT20Throws.filter(t=>t.dx>0).reduce((sum,t) => sum+Math.abs(t.dx),0)/allT20Throws.filter(t=>t.dx>0).length : allT20Throws.filter(t=>t.dx<0).reduce((sum,t) => sum+Math.abs(t.dx),0)/allT20Throws.filter(t=>t.dx<0).length
-  const dyT20Adjusted = dyT20>0 ? allT20Throws.filter(t=>t.dy>-103).reduce((sum,t) => sum+Math.abs(t.dy),0)/allT20Throws.filter(t=>t.dy>-103).length : allT20Throws.filter(t=>t.dy<-103).reduce((sum,t) => sum+Math.abs(t.dy),0)/allT20Throws.filter(t=>t.dy<-103).length
+  const dyT20Adjusted = dyT20>0 ? 103-(allT20Throws.filter(t=>t.dy>-103).reduce((sum,t) => sum+Math.abs(t.dy),0)/allT20Throws.filter(t=>t.dy>-103).length) : (allT20Throws.filter(t=>t.dy<-103).reduce((sum,t) => sum+Math.abs(t.dy),0)/allT20Throws.filter(t=>t.dy<-103).length)-103
   const groupingDistance = allT20Throws.reduce((sum,t) => sum + allT20Throws.reduce((visitSum, ot) => visitSum + Math.sqrt((t.dx - ot.dx)**2 + (t.dy - ot.dy)**2), 0), 0) / (allT20Throws.length * allT20Throws.length)
 
   const visits = {};
@@ -573,7 +745,7 @@ export function showSessionSummary(player, session, allSessions) {
   }
   const visitDistances = Object.values(visits).map(visitGroupingScore);
   const averageGroupingDistance = visitDistances.reduce((sum, d) => sum + d, 0) / visitDistances.length;
-  const groupingScore = Math.max(0, Math.min(10, 10 * (1 - Math.pow((Math.max(0, 0.3 * groupingDistance + 0.7 * averageGroupingDistance - 8)) / 100, 0.8))));
+  const groupingScore = Math.max(0, Math.min(10, 10 * (1 - Math.pow((Math.max(0, 0.25 * groupingDistance + 0.75 * averageGroupingDistance - 10)) / 100, 0.75))));
 
   sessionCard[0].innerHTML = 
   `<div class="card-meta">
@@ -590,7 +762,7 @@ export function showSessionSummary(player, session, allSessions) {
   sessionCard[2].innerHTML = 
   `
   SUMMARY
-  <hr style="width:50%; margin-left:0; height:1px; border-width:0; background-color:#aaa">
+  <hr style="width:50%; height:1px; border-width:0; background-color:#245e52">
   <span class="card-stat">Legs Played:</span> ${legs}
   <br><span class="card-stat">Throws:</span> ${s.basic.totalThrows}
   <br><span class="card-stat">Visits:</span> ${s.basic.totalVisits}
@@ -602,15 +774,15 @@ export function showSessionSummary(player, session, allSessions) {
 
   sessionCard[3].innerHTML = 
   `
-  GROUPING
-  <hr style="width:50%; margin-right:0; height:1px; border-width:0; background-color:#aaa">
+  PRECISION
+  <hr style="width:50%; height:1px; border-width:0; background-color:#245e52">
   <span class="card-stat">Overall:</span> ${groupingDistance.toFixed(0)}mm 
   <br><span class="card-stat">Visit:</span> ${averageGroupingDistance.toFixed(0)}mm
-  <br><span class="card-stat">Score:</span> ${groupingScore.toFixed(1)}/10
+  <br><span class="card-stat">Score:</span> ${groupingScore.toFixed(1)}/10<br><span class="card-stat">${"▰".repeat(Math.round(groupingScore)) + "▱".repeat(10-Math.round(groupingScore))}</span>
   <br><br>CONSISTENCY
-  <hr style="width:50%; margin-right:0; height:1px; border-width:0; background-color:#aaa">
-  <span class="card-stat">Best visit:</span> ${Math.max(...session.raw.visits)}
-  <br><span class="card-stat">Worst visit:</span> ${Math.min(...session.raw.visits.filter(v=>v>0))}
+  <hr style="width:50%; height:1px; border-width:0; background-color:#245e52">
+  <span class="card-stat">Best Leg:</span> ${Math.min(...session.stats.basic.throwsPerLeg)} darts
+  ${session.stats.basic.totalLegs>1?`<br><span class="card-stat">Worst Leg:</span> ${Math.max(...session.stats.basic.throwsPerLeg)} darts`:""}
   `
 
   sessionCard[4].innerHTML = 
@@ -620,9 +792,8 @@ export function showSessionSummary(player, session, allSessions) {
 
 }
 
-function drawDartMarker(x,y,current=false) {
-  const size = current ? 4 : 3
-  ctx.strokeStyle = "#d4a017";
+function drawDartMarker(x,y,current=false,size = current ? 4 : 3, col = "#d4a017") {
+  ctx.strokeStyle = col;
   ctx.lineWidth = 2;
 
   ctx.beginPath();

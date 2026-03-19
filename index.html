@@ -28,7 +28,7 @@
     <p>Release to record the throw.</p>
     <p>Use the buttons below to manage your throws.</p>
   </div>
-  <canvas id="dartboard" width="500" height="600"></canvas>
+  <canvas id="dartboard" width="550" height="550"></canvas>
   <div id="score-column">
       <div class="score-box">.</div>
       <div class="score-box">.</div>
@@ -77,8 +77,8 @@
       <div height="500" width="100%" display="flex" flex-direction="row" gap="0px">
       <div id="session-dashboard">
         <div id="session-grid">
-        <div id="session-card-header">SESSION REPORT</div>
-        <hr style="width:50%; margin-left:0; height:1px; border-width:0; background-color:#aaa">
+        <div id="session-card-header">SESSION REPORT
+        <hr style="width:25%; height:1px; border-width:0; background-color:#7c1f25"></div>
         <div id="session-card-1" class="session-card"></div>
         <div id="session-card-2" class="session-card"></div>
         <div class="heatmap-container">
@@ -153,9 +153,8 @@
           <br><br>🥈 <span class="double-count">99999</span>
           <br><br>🥉 <span class="double-count">99999</span>
         </div>
-      <div id="doubles-graph-container" class="graph-wrapper">
-        <canvas id="doubles-graph"></canvas>
-      </div>
+        <div id="top-doubles-table"></div>
+        <div id="worst-doubles-table"></div>
     </div>
     </div>
     <div class="stats-names">

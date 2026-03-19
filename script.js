@@ -14,7 +14,6 @@ let dart;
 let session;
 let throwGraph;
 let visitGraph;
-let doublesGraph;
 let sessionTimeline;
 let allSessions = await database.sessions.toArray();
 let longTermStats = calculateLongTermStats(allSessions);
@@ -26,19 +25,19 @@ const slider = document.querySelector(".slider")
 const trackerPage = document.getElementById("tracker");
 const throwGraphCanvas = document.getElementById("throw-graph");
 const visitGraphCanvas = document.getElementById("visit-graph");
-const doublesGraphCanvas = document.getElementById("doubles-graph");
 const dartboardCanvas = document.querySelectorAll(".dartboard-heatmap");
 const dartMarkerCanvas = document.querySelectorAll(".dartmarkers");
 const heatmapCanvas = document.querySelectorAll(".heatmap");
+const magnifierCanvas = document.getElementById("magnifier")
 const allCanvas = document.querySelectorAll("canvas");
 const viewStatsSelect = document.getElementById("view-stats-select");
 const summaryTitle = document.querySelector("#stats h2");
 
-for (let session of allSessions) {
-  updateSessionStats(session);
+//for (let session of allSessions) {
+  //updateSessionStats(session);
   //if (session.stats.checkout.percentage == "NaN") session.stats.checkout.percentage = 0
-  database.sessions.put(session)
-}
+//  database.sessions.put(session)
+//}
 
 
 createPlayer()
@@ -86,7 +85,7 @@ btn.bounceOut.addEventListener("click", () => {
 btn.delLastThrow.addEventListener("click", () => {
   if (session.raw.throws.length == 0) return;
   if (gameState.isGame && session.raw.throws[session.raw.throws.length - 1].leg != gameState.leg) return;
-  if (gameState.isGame && gameState.isPaused) {btn.newLeg.toggleAttribute("hidden"), gameState.isPaused = false, canvas.style.cursor="crosshair"};
+  if (gameState.isGame && gameState.isPaused) {btn.newLeg.toggleAttribute("hidden"), gameState.isPaused = false};
   session.raw.throws.pop();
   update(session);
   session.meta.duration = Date.now() - session.meta.date;
@@ -102,7 +101,6 @@ btn.newLeg.addEventListener("click", () => {
   update(session);
   database.sessions.put(session);
   gameState.isPaused = false;
-  canvas.style.cursor = "crosshair";
   btn.newLeg.toggleAttribute("hidden");
   btn.toStats.toggleAttribute("hidden");
 })
@@ -113,7 +111,6 @@ btn.sessionStats.addEventListener("click", () => {
   slider.style.transform = "translateX(0%)";
   updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
-  updateBarChart(doublesGraph, Object.keys(session.stats.checkout.segments), Object.keys(session.stats.checkout.segments).map(key => session.stats.checkout.segments[key].percentage), 100);
   showSessionStats(session)
 })
 
@@ -121,7 +118,6 @@ btn.allTimeStats.addEventListener("click", () => {
   slider.style.transform = "translateX(100%)";
   updateBarChart(throwGraph, Object.keys(longTermStats.scoring.throws), Object.values(longTermStats.scoring.throws), longTermStats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(longTermStats.scoring.visits), longTermStats.basic.totalVisits);
-  updateBarChart(doublesGraph, Object.keys(longTermStats.checkout.segments), Object.keys(longTermStats.checkout.segments).map(key => longTermStats.checkout.segments[key].percentage), 100);
   showAllTimeStats(longTermStats);
 })
 
@@ -140,7 +136,6 @@ btn.toGameMode.addEventListener("click", async () => {
   gameState.isGame = true;
   gameState.isPaused = false;
   gameState.scoreRemaining = 501;
-  canvas.style.cursor = "crosshair";
   trackerPage.style.opacity = 1;
   session = createSession();
   database.sessions.add(session);
@@ -150,7 +145,6 @@ btn.toGameMode.addEventListener("click", async () => {
   init(session);
   throwGraph = createBarChart(throwGraphCanvas, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws));
   visitGraph = createBarChart(visitGraphCanvas, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits));
-  doublesGraph = createBarChart(doublesGraphCanvas, Object.keys(session.stats.checkout.segments), Object.keys(session.stats.checkout.segments).map(key => session.stats.checkout.segments[key].percentage));
   updateBarChart(throwGraph, Object.keys(longTermStats.scoring.throws), Object.values(longTermStats.scoring.throws), longTermStats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(longTermStats.scoring.visits), longTermStats.basic.totalVisits);
   showAllTimeStats(longTermStats);
@@ -170,7 +164,6 @@ btn.backToHomeFromTracker.addEventListener("click", () => {
     ctx.clearRect(0,0,c.width,c.height)
     if (throwGraph) throwGraph.destroy();
     if (visitGraph) visitGraph.destroy();
-    if (doublesGraph) doublesGraph.destroy();
     })}, {once: true}
   );
 })
@@ -185,7 +178,6 @@ btn.toStats.addEventListener("click", async () => {
   appState.page = "stats";
   updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
-  updateBarChart(doublesGraph, Object.keys(session.stats.checkout.segments), Object.keys(session.stats.checkout.segments).map(key => session.stats.checkout.segments[key].percentage), 100);
   //updateLineChart(sessionTimeline, session.raw.throws.map((_,i) => i), session.raw.throws.map(t => t.score));
   slider.style.transform = "translateX(0%)";
   page.style.transform = "translateX(-200vw)";
@@ -225,7 +217,6 @@ btn.backToHomeFromStats.addEventListener("click", () => {
     document.querySelectorAll(".stat-view").forEach(view => view.removeAttribute("show"));
     if (throwGraph && gameState.isGame) throwGraph.destroy();
     if (visitGraph && gameState.isGame) visitGraph.destroy();
-    if (doublesGraph && gameState.isGame) doublesGraph.destroy();
     btn.backToTracker.removeAttribute("hidden");
     page.style.transition = "transform 0.7s cubic-bezier(0.3,0.2,0.2,1)"
   }, {once: true});

@@ -127,7 +127,7 @@ section {
     grid-column: 2;
     grid-row: 2;
     width: 45vw;
-    text-align: right;
+    text-align: left;
     font-size: smaller;
 }
 
@@ -135,7 +135,7 @@ section {
     grid-column: 1;
     grid-row: 4;
     width: 45vw;
-    text-align: left;
+    text-align: center;
     font-size: smaller;
 }
 
@@ -143,7 +143,7 @@ section {
     grid-column: 2;
     grid-row: 4;
     width: 45vw;
-    text-align: right;
+    text-align: center;
     font-size: smaller;
 }
 
@@ -188,23 +188,28 @@ section {
 #session-card-1 {
     grid-row: 2;
     grid-column: 1;
+    font-size: smaller;
 }
 
 #session-card-2 {
     grid-row: 2;
     grid-column: 2;
+    font-size: smaller;
     text-align: right;
 }
 
 #session-card-3 {
     grid-row: 4;
     grid-column: 1;
+    font-size: smaller;
+    text-align: center;
 }
 
 #session-card-4 {
     grid-row: 4;
     grid-column: 2;
-    text-align: right;
+    font-size: smaller;
+    text-align: center;
 }
 
 #session-card-5 {
@@ -212,7 +217,7 @@ section {
     grid-column: 1 / span 2;
     font-size: smaller;
     text-align: center;
-    border: 1px solid #999;
+    border: 1px dotted #7c1f25;
 }
 
 .card-stat {
@@ -352,8 +357,14 @@ section {
     text-align: right;
 }
 
-#doubles-graph-container {
-    grid-column: 1 / span 2;
+#top-doubles-table {
+    grid-row: 2;
+    grid-column: 1;
+}
+
+#worst-doubles-table {
+    grid-row: 3;
+    grid-column: 1;
 }
 
 #home p {
@@ -396,14 +407,14 @@ h2 {
     border: 1px solid #333;
     cursor: crosshair;
     width: 100%;
-    max-width: min(80vw, 500px);
+    max-width: min(95vw, 500px);
     height: auto;
     display: block;
   }
 
 #score-column {
-    min-width: min(80vw, 500px);
-    max-width: min(80vw, 500px);
+    min-width: min(95vw, 500px);
+    max-width: min(95vw, 500px);
     height: 5vh;
     display: flex;
     flex-direction: row;
@@ -454,8 +465,8 @@ button {
 }
 
 #stats .switch-page{
-    position: absolute;
-    bottom: 5vh;
+    position: relative;
+    bottom: 9vh;
 }
 
 .switch-page {
@@ -486,8 +497,21 @@ button:hover {
     height: 80vw;
 }
 
+#tracker-container {
+    position: relative;
+    width: 100%;
+    max-width: min(80vw, 500px);
+    height: min(97vw, 600px);
+}
+
+#tracker-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
 .heatmap-container canvas {
-    position:absolute;
+    position: absolute;
     top: 0;
     left: 0;
     opacity: 1;
