@@ -527,11 +527,6 @@ button {
     font-size: clamp(18px,3.5vw,24px);
 }
 
-#stats .switch-page{
-    position: relative;
-    bottom: 7vh;
-}
-
 .switch-page {
     background-color: #111;
     color: #ccc;
