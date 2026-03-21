@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#d4a017">
   <title>Dartboard Tracker</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -11,7 +13,8 @@
   <div id="pages">
   
   <section id="home">
-    <h1>Darts Tracker</h1>
+    <h1>DartScope</h1>
+    <p>DartScope is a free tool designed to help you track and analyze your dart throwing performance. By recording your throws and providing detailed statistics, DartScope allows you to identify your strengths and weaknesses, monitor your progress over time, and ultimately improve your game. Whether you're a casual player or a competitive enthusiast, DartScope offers valuable insights to help you reach your full potential on the oche.</p>
     <button id="practice" class="switch-page">Practice</button>
     <p>(coming soon)</p>
     <button id="game" class="switch-page">Game</button>
@@ -66,11 +69,26 @@
         <canvas class="dartmarkers" width="500" height="500"></canvas>
         <canvas class="heatmap" id="all-time-heatmap" width="500" height="500"></canvas>
         </div>
+        <div id="summary-card-profile">
+          PLAYER PROFILE
+          <div style="display: flex; justify-content: space-between; font-size: x-small;">
+            <span style="color:#3b82f6;">Clinical Finisher</span>
+            <span style="color:#f59e0b">Big Scorer</span>
+          </div>
+          <div class="profile-slider">
+            <div class="slider-track"></div>
+            <div class="slider-marker" id="marker"></div>
+          </div>
+          <span id="player-strength"></span>
+        </div>
         <div id="summary-card-3" class="summary-card"></div>
         <div id="summary-card-4" class="summary-card"></div>
-        <div id="summary-card-footer"></div>
+        <div id="summary-card-footer" class="summary-card">
+          <div id="branding"><span style="color:#245e52">DartScope</span><span style="color:#7c1f25">.io</span></div>
         </div>
         </div>
+        </div>
+        <button id="download-btn">Download Your Profile</button>
     </div>
     
     <div class="stat-view" id="view-session">
@@ -184,6 +202,7 @@
   
   </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="script.js"></script>
 </body>

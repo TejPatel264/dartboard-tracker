@@ -1,0 +1,22 @@
+{
+  "name": "DartScope",
+  "short_name": "DartScope",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#d4a017",
+  "orientation": "portrait-primary",
+  "description": "Play darts - track your stats and performance.",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

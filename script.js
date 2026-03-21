@@ -8,6 +8,7 @@ import { calculateLongTermStats } from "./stats.js";
 import { showQuickViewStats, showSessionStats, showAllTimeStats, showSessionSummary } from "./logic.js";
 import { chartStyles, createBarChart, updateBarChart, createHeatmap, createLineChart, updateLineChart } from "./charts.js";
 import { showSummaryStatView, showSessionStatView, showScoringStatView, showDoublingStatView, toTracker } from "./statsviews.js";
+import { saveProfileCard } from "./logic.js";
 
 let {canvas,} = appState;
 let dart;
@@ -28,16 +29,22 @@ const visitGraphCanvas = document.getElementById("visit-graph");
 const dartboardCanvas = document.querySelectorAll(".dartboard-heatmap");
 const dartMarkerCanvas = document.querySelectorAll(".dartmarkers");
 const heatmapCanvas = document.querySelectorAll(".heatmap");
-const magnifierCanvas = document.getElementById("magnifier")
 const allCanvas = document.querySelectorAll("canvas");
 const viewStatsSelect = document.getElementById("view-stats-select");
 const summaryTitle = document.querySelector("#stats h2");
 
 //for (let session of allSessions) {
-  //updateSessionStats(session);
-  //if (session.stats.checkout.percentage == "NaN") session.stats.checkout.percentage = 0
+//  updateSessionStats(session);
 //  database.sessions.put(session)
 //}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('Service Worker registered:', reg))
+      .catch(err => console.log('Service Worker registration failed:', err));
+  });
+}
 
 
 createPlayer()
@@ -103,6 +110,10 @@ btn.newLeg.addEventListener("click", () => {
   gameState.isPaused = false;
   btn.newLeg.toggleAttribute("hidden");
   btn.toStats.toggleAttribute("hidden");
+})
+
+btn.downloadCard.addEventListener("click", () => {
+  saveProfileCard(player.name)
 })
 
 // STATS TYPE - event listeners

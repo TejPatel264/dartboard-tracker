@@ -222,7 +222,7 @@ function updateGameScore(session) {
   currentThrow.scoreAfter = gameState.scoreRemaining;
 
   let isValidCheckout = currentThrow.multiplier == 2;
-  if ((currentThrow.scoreBefore == 50 && currentLegScores.length % 3 == 0 && currentThrow.dist < 49) || (currentThrow.scoreBefore <= 40 && currentThrow.scoreBefore % 2 == 0)) {
+  if ((currentThrow.scoreBefore == 50 && currentThrow.dist < 49) || (currentThrow.scoreBefore <= 40 && currentThrow.scoreBefore % 2 == 0)) {
     currentThrow.isCheckoutAttempt = true;
   }
   
@@ -296,14 +296,18 @@ export function updateSessionStats(session) {
 
   session.raw.visits.length = 0;
   session.stats.scoring = {
-    scoringThrows:0, scoringAverage:0, 
+    scoringThrows:0, scoringAverage:0, pressureThrows:0, pressureAverage:0,
     throws:{T20:0, T19:0, T18:0, T17:0, T16:0, T15:0, T14:0, T13:0, T12:0, T11:0, T10:0, T9:0, T8:0, T7:0, T6:0, T5:0, T4:0, T3:0, T2:0, T1:0}, 
     visits:{v180:0, v171:0, v133:0, v95:0, v57:0}}
 
   const scoringThrows = (t,i) => t.type != "notThrown" && ((t.scoreBefore > 220 && i % 3 == 0) || (t.scoreBefore > 160 && i % 3 == 1) || (t.scoreBefore > 100 && i % 3 == 2));
   const scoringThrowsCount = throws.filter(scoringThrows).length;
+  const pressureThrows = (t,i) => t.type != "notThrown" && ((t.scoreBefore <= 220 && i % 3 == 0) || (t.scoreBefore <= 160 && i % 3 == 1) || (t.scoreBefore <= 100 && i % 3 == 2)) && t.scoreBefore > 40;
+  const pressureThrowsCount = throws.filter(pressureThrows).length;
   session.stats.scoring.scoringThrows = scoringThrowsCount;
   session.stats.scoring.scoringAverage = scoringThrowsCount > 0 ? (3*(throws.filter(scoringThrows).reduce((sum,t) => sum + t.score, 0) / scoringThrowsCount)).toFixed(2) : 0;
+  session.stats.scoring.pressureThrows = pressureThrowsCount
+  session.stats.scoring.pressureAverage = pressureThrowsCount > 0 ? (3*(throws.filter(pressureThrows).reduce((sum,t) => sum + t.score, 0) / pressureThrowsCount)).toFixed(2) : 0;
 
   session.stats.basic.average = (3*throws.reduce((sum,t)=>sum+t.score,0)/Math.max(1,totalThrows)).toFixed(2);
   
@@ -329,7 +333,7 @@ export function updateSessionStats(session) {
   })
 
   session.stats.checkout.attempts = throws.filter(t => t.isCheckoutAttempt).length
-  session.stats.checkout.success = throws.filter(t => t.scoreAfter == 0).length
+  session.stats.checkout.success = throws.filter(t => t.scoreAfter == 0 && t.type != "bust").length
   session.stats.checkout.percentage = session.stats.checkout.attempts ? ((session.stats.checkout.success / session.stats.checkout.attempts) * 100).toFixed(2) : 0;
 
   session.stats.checkout.when.throw1.attempts = 0
@@ -624,11 +628,17 @@ export function showAllTimeStats(longTermStats) {
 }
 
 export function showQuickViewStats(player, allSessions, longTermStats) {
-  const summaryCard = document.querySelectorAll(".summary-card")
-  const sessionCount = allSessions.filter(s => s.raw.throws.length > 0).length
+  const summaryCard = document.querySelectorAll(".summary-card");
+  const sessionCount = allSessions.filter(s => s.raw.throws.length > 0).length;
   const doubleCount = Object.entries(longTermStats.checkout.segments).sort((a, b) => b[1].percentage - a[1].percentage);
   const trebleCount = Object.entries(longTermStats.scoring.throws).sort((a, b) => b[1] - a[1] || b[1].attempts - a[1].attempts);
-  const hit170 = allSessions.reduce((best,s) => Math.max(best,s.stats.checkout.highest),0)==170
+  const hit170 = allSessions.reduce((best,s) => Math.max(best,s.stats.checkout.highest),0)==170;
+  const scoringIndex = longTermStats.scoring.scoringAverage/90;
+  const finishingIndex = longTermStats.checkout.percentage/30;
+  const playerIndex = Math.tanh(1.5 * Math.log(scoringIndex/finishingIndex))*100;
+  const marker = document.getElementById("marker");
+  marker.style.left = "50%";
+
   const maxDuration = allSessions.reduce((max, s) => Math.max(max,Number(s.meta.duration)),0)
   const totalDuration = allSessions.reduce((sum, s) => sum + Number(s.meta.duration),0)
   const formatter = new Intl.DurationFormat("en", { style: "short" });
@@ -661,12 +671,19 @@ export function showQuickViewStats(player, allSessions, longTermStats) {
   const diffFromToday = Math.floor((new Date() - dates[dates.length-1])/(1000*60*60*24))
   if (diffFromToday>1) currentStreak = 0;
 
-  summaryCard[0].innerHTML = `${player.name}'s All Time Stats<hr style="width:25%; margin-left:50; height:1px; border-width:0; background-color:#7c1f25">`
+  summaryCard[0].innerHTML = 
+  `<span style="color:whitesmoke;">${player.name}'s All Time Stats</span><hr style="width:25%; margin-left:50; height:1px; border-width:0; background-color:#7c1f25">`
 
   summaryCard[1].innerHTML = 
   `
   <span class="card-stat">Days Played:</span> ${dates.length} ${dates.length==1?"day":"days"}
   <br><span class="card-stat">Play Time:</span> ${formatter.format(totalDurationString)}
+  `
+
+  summaryCard[2].innerHTML = 
+  `
+  <span class="card-stat">Current Streak: </span>${currentStreak} ${currentStreak==1?"day":"days"}
+  <br><span class="card-stat">Longest Streak: </span>${longest} ${longest==1?"day":"days"}
   `
 
   summaryCard[3].innerHTML = 
@@ -682,12 +699,6 @@ export function showQuickViewStats(player, allSessions, longTermStats) {
   <br><span class="card-stat">${hit170?"Total 170 Checkouts:":"Highest Checkout:"}</span> ${hit170?allSessions.reduce((sum,s) => sum + s.stats.checkout.all.reduce((total,c) => {if (c==170) total++}, 0), 0):longTermStats.checkout.highest}
   `
 
-  summaryCard[2].innerHTML = 
-  `
-  🔥 <span class="card-stat">Current Streak: </span>${currentStreak} ${currentStreak==1?"day":"days"}
-  <br>🏆 <span class="card-stat">Longest Streak:</span>${longest} ${longest==1?"day":"days"}
-  `
-
   summaryCard[4].innerHTML = 
   `
   BESTS
@@ -698,6 +709,34 @@ export function showQuickViewStats(player, allSessions, longTermStats) {
   <br><span class="card-stat">Treble:</span> ${trebleCount[0][0]} <span class="card-meta">(x${trebleCount[0][1]})</span> 
   <br><span class="card-stat">Best Leg:</span> ${longTermStats.milestone.shortestLeg} darts
   `
+  document.getElementById("pages").addEventListener("transitionend", () => {
+    setTimeout(() => {
+      marker.style.left = (playerIndex + 100)/2 + "%"
+    }, 1000)
+  })
+  
+  const playerStrengthElement = document.getElementById("player-strength");
+  let playerStrengthBorderColour;
+  if (playerIndex > 50) playerStrengthBorderColour = "#f59e0b";
+  else if (playerIndex < -50) playerStrengthBorderColour = "#3b82f6";
+  else playerStrengthBorderColour = "#a855f7";
+  playerStrengthElement.style.border = `1px dotted ${playerStrengthBorderColour}`;
+
+  let playerStrength;
+  if (playerIndex > 33) {
+    if ((longTermStats.scoring.pressureAverage / longTermStats.scoring.scoringAverage) > 0.85 ) playerStrength = "Pressure Scorer - Upping the Scoring towards the end of a leg";
+    else if (longTermStats.scoring.visits.v95 > longTermStats.scoring.visits.v57) playerStrength = "Heavy Scorer - Big visits to start the leg";
+    else playerStrength = "Consistent Scorer - ";
+  }
+  else if (playerIndex < -33) {
+    if ((longTermStats.checkout.tonPlus / longTermStats.checkout.success) > 0.05) playerStrength = "Clutch Finisher - 100+ Finish Specialist";
+    else if((100*longTermStats.checkout.when.visit1.success/longTermStats.checkout.when.visit1.attempts) > longTermStats.checkout.percentage * 1.33) playerStrength = "Reliable Finisher - Finishing regularly in your 1st visit"
+    else if (Object.values(longTermStats.checkout.segments).some(s => s.percentage > longTermStats.checkout.percentage * 1.66)) playerStrength = `Dependable Finisher - ${doubleCount[0][0]} always has your back`;
+    else playerStrength = "Consistent Finisher - ";
+  }
+  else playerStrength = "All Rounder - Consistently strong in every department";
+
+  playerStrengthElement.innerText = playerStrength;
 }
 
 export function showSessionSummary(player, session, allSessions) {
@@ -831,6 +870,19 @@ function lastThreeThrows(session) {
   scoreBox[i].innerText = t.segment);
 
   scoreBox[currentThrowOfVisit - 1].toggleAttribute("data-current");
+}
+
+export function saveProfileCard(player) {
+  const profileCard = document.getElementById("summary-dashboard")
+  html2canvas(profileCard, {
+      backgroundColor: null,
+      scale: 2
+  }).then(canvas => {
+      const link = document.createElement("a");
+      link.download = `${player.name||"player"}-darts-profile.png`;
+      link.href = canvas.toDataURL();
+      link.click()
+    })
 }
 
 export function redrawCanvas(gameState, session) {
