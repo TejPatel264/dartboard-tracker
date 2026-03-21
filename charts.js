@@ -340,18 +340,13 @@ function drawHeatmap(canvas, sessions) {
 const page = document.getElementById("pages");
 
 export function createHeatmap(dartboardCanvas, dartMarkerCanvas, heatmapCanvas, sessions, heatmap=true) {
-    dartMarkerCanvas.style.opacity = 1;
     heatmapCanvas.style.opacity = 0;
     dartboardCanvas.getContext("2d").clearRect(0,0,dartboardCanvas.width,dartboardCanvas.height)
     dartMarkerCanvas.getContext("2d").clearRect(0,0,dartMarkerCanvas.width,dartMarkerCanvas.height)
     heatmapCanvas.getContext("2d", {willReadFrequently: true}).clearRect(0,0,heatmapCanvas.width,heatmapCanvas.height)
     drawBlankDartboard(dartboardCanvas);
-    setTimeout(() => drawAllDarts(dartMarkerCanvas, sessions), 1500);
-    if (heatmap)  {
-        page.addEventListener("transitionend", () => {
-            drawHeatmap(heatmapCanvas,sessions);
-            setTimeout(() => dartMarkerCanvas.style.opacity = 0, 3500)
-            setTimeout(() => heatmapCanvas.style.opacity = 1, 4000)
-        }, {once: true});
-    }
+    page.addEventListener("transitionend", () => {
+        if (!heatmap) setTimeout(() => drawAllDarts(dartMarkerCanvas, sessions), 1000);
+        if (heatmap) {drawHeatmap(heatmapCanvas,sessions); heatmapCanvas.style.opacity = 1;}
+    }, {once: true});
 }

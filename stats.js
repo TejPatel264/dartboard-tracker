@@ -10,6 +10,8 @@ export function calculateLongTermStats(sessions) {
         scoring: {
             scoringThrows: 0,
             scoringAverage: 0,
+            pressureThrows: 0,
+            pressureAverage: 0,
             visits: {
                 v180: 0,
                 v171: 0,
@@ -91,6 +93,8 @@ export function calculateLongTermStats(sessions) {
     longTermStats.basic.average = longTermStats.basic.totalThrows ? (sessions.reduce((sum,s) => sum + s.stats.basic.average * s.stats.basic.totalThrows, 0)/longTermStats.basic.totalThrows).toFixed(2) : 0;
     longTermStats.scoring.scoringThrows = sessions.reduce((sum,s) => sum + s.stats.scoring.scoringThrows, 0);
     longTermStats.scoring.scoringAverage = longTermStats.scoring.scoringThrows ? (sessions.reduce((sum,s) => sum + s.stats.scoring.scoringAverage * s.stats.scoring.scoringThrows, 0)/(longTermStats.scoring.scoringThrows)).toFixed(2) : 0;
+    longTermStats.scoring.pressureThrows = sessions.reduce((sum,s) => sum + s.stats.scoring.pressureThrows, 0);
+    longTermStats.scoring.pressureAverage = longTermStats.scoring.pressureThrows ? (sessions.reduce((sum,s) => sum + s.stats.scoring.pressureAverage * s.stats.scoring.pressureThrows, 0)/(longTermStats.scoring.pressureThrows)).toFixed(2) : 0;
     longTermStats.scoring.visits.highest = sessions.reduce((best,s) => Math.max(best, Math.max(...s.raw.visits)), 0);
     longTermStats.checkout.attempts = sessions.reduce((sum,s) => sum + s.stats.checkout.attempts, 0);
     longTermStats.checkout.success = sessions.reduce((sum,s) => sum + s.stats.checkout.success, 0);

@@ -18,6 +18,8 @@ const viewSessionStats = document.getElementById("btn-session")
 const viewScoringStats = document.getElementById("btn-scoring")
 const viewDoublingStats = document.getElementById("btn-doubling")
 
+const downloadCard = document.getElementById("download-btn")
+
 export const btn = {
     toPracticeMode,
     toGameMode,
@@ -34,5 +36,6 @@ export const btn = {
     viewQuickStats,
     viewSessionStats,
     viewScoringStats,
-    viewDoublingStats
+    viewDoublingStats,
+    downloadCard
 }

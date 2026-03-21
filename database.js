@@ -48,6 +48,8 @@ export function createSession() {
       scoring: {
         scoringThrows: 0,
         scoringAverage: 0,
+        pressureThrows: 0,
+        pressureAverage: 0,
         throws: {
           T20: 0,
           T19: 0,
