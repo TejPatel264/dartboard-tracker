@@ -672,7 +672,7 @@ export function showQuickViewStats(player, allSessions, longTermStats) {
   if (diffFromToday>1) currentStreak = 0;
 
   summaryCard[0].innerHTML = 
-  `<span style="color:whitesmoke;">${player.name}'s All Time Stats</span><hr style="width:25%; margin-left:50; height:1px; border-width:0; background-color:#7c1f25">`
+  `<span style="color:whitesmoke;">${player.name||"Player"}'s All Time Stats</span><hr style="width:25%; margin-left:50; height:1px; border-width:0; background-color:#7c1f25">`
 
   summaryCard[1].innerHTML = 
   `
