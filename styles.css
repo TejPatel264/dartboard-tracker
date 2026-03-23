@@ -91,23 +91,27 @@ section {
 
 #summary-dashboard {
     display: flex;
+    position: absolute;
+    flex-direction: column;
     max-width: 95vw;
-    max-height: 85vh;
+    max-height: 95vh;
     justify-content: center;
     align-items: center;
-    border: 2px solid #777;
-    border-radius: 20px;
-    background-color: #1a1a1a;
-    margin-top: -15vh;
+    top: 0;
+    margin-top: 5vh;
     color: #ccc;
 }
 
 #summary-grid {
     display: grid;
+    max-height: 90vh;
+    border: 2px solid #777;
+    border-radius: 20px;
+    background-color: #1a1a1a;
     grid-template-columns: minmax(0,1fr) minmax(0,1fr);
     grid-template-rows: auto auto auto auto auto;
     row-gap: clamp(5px,1vh,25px);
-    margin: 3vw;
+    padding: 3vw;
     justify-content: space-evenly;
 }
 
@@ -177,6 +181,7 @@ section {
 }
 
 #download-btn {
+    position: relative;
     font-size: clamp(11px,1.8vw,13px);
     width: auto;
     height: auto;
@@ -229,21 +234,25 @@ section {
 
 #session-dashboard {
     display: flex;
-    width: 95vw;
-    height: 85vh;
+    position: absolute;
+    flex-direction: column;
+    max-width: 95vw;
+    max-height: 85vh;
     justify-content: center;
     align-items: center;
-    border: 1px solid #bbb;
-    background-color: #cfcfcf;
-    margin-top: -15vh;
+    top: 0;
+    margin-top: 5vh;
 }
 
 #session-grid {
     display: grid;
     grid-template-columns: minmax(0,1fr) minmax(0,1fr);
     grid-template-rows: auto auto;
-    gap: 4px;
-    margin-top: 10px;
+    border: 2px solid #777;
+    border-radius: 20px;
+    background-color: whitesmoke;
+    gap: 2px;
+    padding: 3vw;
 }
 
 .session-card {
@@ -290,6 +299,12 @@ section {
     font-size: clamp(12px,2.0vw,14px);
     text-align: center;
     border: 1px dotted #7c1f25;
+    border-radius: 10px;
+    padding: 2px;
+}
+
+#view-stats-select {
+    position: absolute; top: 0; display: none; flex-direction: row; gap: 10px;
 }
 
 .card-stat {
@@ -305,8 +320,11 @@ section {
 #view-session .heatmap-container {
     grid-column: 1 / span 2;
     grid-row: 3;
-    height: 95vw;
-    width: 95vw;
+    margin: auto;
+    margin-top: -2vh;
+    margin-bottom: -2vh;
+    height: min(45vh,90vw);
+    width: min(45vh,90vw);
     justify-items: center;
     align-items: center;
 }
