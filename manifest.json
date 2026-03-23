@@ -4,7 +4,7 @@
   "start_url": ".",
   "display": "standalone",
   "background_color": "#1a1a1a",
-  "theme_color": "#d4a017",
+  "theme_color": "#1a1a1a",
   "orientation": "portrait-primary",
   "description": "Play darts - track your stats and performance.",
   "icons": [

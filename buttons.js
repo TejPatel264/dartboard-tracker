@@ -18,6 +18,7 @@ const viewSessionStats = document.getElementById("btn-session")
 const viewScoringStats = document.getElementById("btn-scoring")
 const viewDoublingStats = document.getElementById("btn-doubling")
 
+const help = document.getElementById("help")
 const downloadCard = document.getElementById("download-btn")
 
 export const btn = {
@@ -37,5 +38,6 @@ export const btn = {
     viewSessionStats,
     viewScoringStats,
     viewDoublingStats,
-    downloadCard
+    downloadCard,
+    help
 }
