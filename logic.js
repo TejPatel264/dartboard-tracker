@@ -45,7 +45,7 @@ function drawNumbers(i,x,y) {
 
 function drawDartboard() {
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#ddd";
+  ctx.fillStyle = "#1a1a1a";
   ctx.fillRect(0,0,width,height+50);
   drawCircle(225.5, 2,"#222")
   for (let i=0; i<20; i++) {
@@ -125,7 +125,7 @@ export function drawMagnifier(dart) {
 
   ctx.restore()
 
-  drawCircle(size, 3, "#11111177", "#777", x-offsetX, y-offsetY)
+  drawCircle(size, 3, "#11111177", "#e4e4e4", x-offsetX, y-offsetY)
 
   const grad = ctx.createRadialGradient(x-offsetX-size*0.25,y-offsetY-size*0.25,5,x-offsetX,y-offsetY,size)
   grad.addColorStop(0,"rgba(255,255,255,0.25)")
@@ -142,15 +142,15 @@ export function drawMagnifier(dart) {
   if (dist>99 && dist<107) mult="T"
   else if (dist>162 && dist<170) mult="D"
   const text = mult + sectorScores[sector]
-  ctx.fillStyle = "#eeeeeeaa";
+  ctx.fillStyle = "#f5f5f5";
   if (dist > 16 && dist < 250) ctx.fillText(text,x-offsetX,y-offsetY+size*0.9);
   else if (dist <= 16) ctx.fillText(dist<6.35 ?"BULL":25,x-offsetX,y-offsetY+size*0.9);
 
   //drawDartMarker(x-offsetX,y-offsetY,false,5,"#ccc")
 
   size = 8
-  ctx.strokeStyle = "#eee";
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "#f5f5f5";
+  ctx.lineWidth = 2;
 
   ctx.beginPath();
   ctx.moveTo(x-offsetX-size,y-offsetY-size);
@@ -192,16 +192,16 @@ export function handleDartThrow(dart, session) {
 }
 
 function drawGameScore(num=501, leg=1, throwNo=1) {
-  ctx.fillStyle = "#111";
+  ctx.fillStyle = "whitesmoke";
   ctx.font = "bold 24px monospace";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
 
-  ctx.fillText(`Score: ${num}`,2,2);
+  ctx.fillText(`Score: ${num}`,12,15);
 
   ctx.textAlign = "right";
-  ctx.fillText(`Leg: ${leg}`,width-2,2);
-  ctx.fillText(`Throw: ${throwNo}`,width-2,30);
+  ctx.fillText(`Leg: ${leg}`,width-15,10);
+  ctx.fillText(`Throw: ${throwNo}`,width-5,35);
 }
 
 function updateGameScore(session) {
@@ -405,11 +405,11 @@ function updateTrackerUI(session) {
   const totalThrows = session.stats.basic.totalThrows
   const average = session.stats.basic.average
   
-  ctx.fillStyle = "#111";
-  ctx.font = "bold 20px monospace";
+  ctx.fillStyle = "whitesmoke";
+  ctx.font = "20px monospace";
   ctx.textBaseline = "bottom";
   ctx.textAlign = "right";
-  ctx.fillText(`Average: ${average}`,width-2,height-2);
+  ctx.fillText(`Average: ${average}`,width-5,height-8);
   if (!gameState.isGame) {ctx.textAlign = "left"; ctx.fillText(`Throws: ${totalThrows}`,2,height-1);}
 }
 
@@ -430,12 +430,15 @@ export function showSessionStats(session) {
     else box.innerText = "";
   });
 
-  trebleCount = Object.entries(session.stats.scoring.throws).sort((a, b) => a[1] - b[1]);
-  topScores.forEach((box, i) => {
-    if (i < 4) return;
-    if (i < trebleCount.length) box.innerText = `${trebleCount[i-4][0]}: ${trebleCount[i-4][1]}`;
-    else box.innerText = "";
-  });
+  const visitCount = document.getElementById("visit-count")
+  visitCount.innerHTML = 
+  `
+  180:${session.stats.scoring.visits.v180}
+  <br>171+:${session.stats.scoring.visits.v171}
+  <br>131+:${session.stats.scoring.visits.v133}
+  <br>91+:${session.stats.scoring.visits.v95}
+  <br>51+:${session.stats.scoring.visits.v57}
+  `
 
   const topDoublesTable = document.getElementById("top-doubles-table")
   topDoublesTable.innerHTML = ""
@@ -449,13 +452,8 @@ export function showSessionStats(session) {
   statBox[4].innerText = session.stats.checkout.when.visit1.success + "/" + session.stats.checkout.when.visit1.attempts + " | " + (100*session.stats.checkout.when.visit1.success/session.stats.checkout.when.visit1.attempts).toFixed(0) + "%"
   statBox[5].innerText = session.stats.checkout.when.visit2.success + "/" + session.stats.checkout.when.visit2.attempts + " | " + (session.stats.checkout.when.visit2.attempts ? (100*session.stats.checkout.when.visit2.success/session.stats.checkout.when.visit2.attempts).toFixed(0) : 0) + "%"
 
-  const topDoubles = document.querySelectorAll(".double-count");
   let doubleCount = Object.entries(session.stats.checkout.segments).sort((a, b) => b[1].percentage - a[1].percentage || b[1].attempts - a[1].attempts);
-
-  topDoubles.forEach((box, i) => {
-    if (i < doubleCount.length) box.innerText =  `${doubleCount[i][0]}: ${doubleCount[i][1].percentage}% (${doubleCount[i][1].success}/${doubleCount[i][1].attempts})`;
-    else box.innerText = ""
-  })
+  
   topDoublesTable.innerHTML = 
   `
   <div class="stats-names">
@@ -485,11 +483,6 @@ export function showSessionStats(session) {
   `
 
   doubleCount = Object.entries(session.stats.checkout.segments).sort((a, b) => a[1].percentage - b[1].percentage || a[1].attempts - b[1].attempts);
-  topDoubles.forEach((box, i) => {
-    if (i<3) return;
-    if (i < doubleCount.length) box.innerText =  `${doubleCount[i-3][0]}: ${doubleCount[i-3][1].percentage}% (${doubleCount[i-3][1].success}/${doubleCount[i-3][1].attempts})`;
-    else box.innerText = ""
-  })
 
   worstDoublesTable.innerHTML = 
   `
@@ -537,12 +530,15 @@ export function showAllTimeStats(longTermStats) {
     else box.innerText = "";
   });
 
-  trebleCount = Object.entries(longTermStats.scoring.throws).sort((a, b) => a[1] - b[1]);
-  topScores.forEach((box, i) => {
-    if (i < 4) return;
-    if (i < trebleCount.length) box.innerText = `${trebleCount[i-4][0]}: ${trebleCount[i-4][1]}`;
-    else box.innerText = "";
-  });
+  const visitCount = document.getElementById("visit-count")
+  visitCount.innerHTML = 
+  `
+  180:${longTermStats.scoring.visits.v180}
+  <br>171+:${longTermStats.scoring.visits.v171}
+  <br>131+:${longTermStats.scoring.visits.v133}
+  <br>91+:${longTermStats.scoring.visits.v95}
+  <br>51+:${longTermStats.scoring.visits.v57}
+  `
 
   const topDoublesTable = document.getElementById("top-doubles-table")
   topDoublesTable.innerHTML = ""

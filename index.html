@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#d4a017">
+  <meta name="theme-color" content="#1a1a1a">
   <title>Dartboard Tracker</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -13,8 +13,14 @@
   <div id="pages">
   
   <section id="home">
-    <h1>DartScope</h1>
-    <p>DartScope is a free tool designed to help you track and analyze your dart throwing performance. By recording your throws and providing detailed statistics, DartScope allows you to identify your strengths and weaknesses, monitor your progress over time, and ultimately improve your game. Whether you're a casual player or a competitive enthusiast, DartScope offers valuable insights to help you reach your full potential on the oche.</p>
+    <button id="help">?</button>
+    <aside id="info">
+    <h1><span style="color:#245e52">DartScope</span><span style="color:#7c1f25">.app</span></h1>
+    DartScope is a free tool designed to help you track and analyze your dart throwing performance. 
+    <br><br>By recording your throws and providing detailed statistics, DartScope allows you to identify your strengths and weaknesses, monitor your progress over time, and ultimately improve your game.
+    <br><br>Whether you're a casual player or a competitive enthusiast, DartScope offers valuable insights to help you reach your full potential on the oche.
+    </aside>
+    <h1><span style="color:#245e52">DartScope</span><span style="color:#7c1f25">.app</span></h1>
     <button id="practice" class="switch-page">Practice</button>
     <p>(coming soon)</p>
     <button id="game" class="switch-page">Game</button>
@@ -31,20 +37,20 @@
     <p>Release to record the throw.</p>
     <p>Use the buttons below to manage your throws.</p>
   </div>
-  <canvas id="dartboard" width="550" height="550"></canvas>
   <div id="score-column">
       <div class="score-box">.</div>
       <div class="score-box">.</div>
       <div class="score-box">.</div>
-    </div>
+  </div>
+  <canvas id="dartboard" width="550" height="550"></canvas>
   <div class="buttons">
     <button id="bounce-out" class="manage-throw">Bounce Out</button>
     <button id="delete-last-throw" class="manage-throw">Delete Last Throw</button>
     <button id="new-leg" class="manage-throw" hidden>New Leg</button>
   </div>
   <aside id="tracker-buttons" class="buttons">
-    <button id="home-page" class="switch-page">&lt; Home Page</button>
-    <button id="view-stats" class="switch-page" hidden>View More Stats &gt;</button>
+    <button id="home-page" class="switch-page">&lt; Home</button>
+    <button id="view-stats" class="switch-page" hidden>Stats &gt;</button>
   </aside>
   </section>
   
@@ -84,7 +90,7 @@
         <div id="summary-card-3" class="summary-card"></div>
         <div id="summary-card-4" class="summary-card"></div>
         <div id="summary-card-footer" class="summary-card">
-          <div id="branding"><span style="color:#245e52">DartScope</span><span style="color:#7c1f25">.app</span></div>
+          <div class="branding"><span style="color:#245e52">DartScope</span><span style="color:#7c1f25">.app</span></div>
         </div>
         </div>
         <button id="download-btn">Download Your Profile</button>
@@ -92,7 +98,6 @@
     </div>
     
     <div class="stat-view" id="view-session">
-      <div height="500" width="100%" display="flex" flex-direction="row" gap="0px">
       <div id="session-dashboard">
         <div id="session-grid">
         <div id="session-card-header">SESSION REPORT
@@ -107,7 +112,6 @@
         <div id="session-card-3" class="session-card"></div>
         <div id="session-card-4" class="session-card"></div>
         <div id="session-card-5" class="session-card"></div>
-      </div>
       </div>
       </div>
     </div>
@@ -134,10 +138,8 @@
           <br><br>🥈 <span class="treble-count">99999</span>
           <br><br>🥉 <span class="treble-count">99999</span>
         </div>
-        <div id="worst-trebles" class="treble-count-box">
-          🥇 <span class="treble-count">99999</span>
-          <br><br>🥈 <span class="treble-count">99999</span>
-          <br><br>🥉 <span class="treble-count">99999</span>
+        <div id="visit-count" class="treble-count-box">
+
         </div>
       <div id="visit-graph-container" class="graph-wrapper">
       <canvas id="visit-graph"></canvas></div>
@@ -149,9 +151,10 @@
     </div>
     
     <div class="stat-view" id="view-doubling">
-      <div class="stats-names">
+    <div id="doubles-dashboard">
+    <div class="stats-names">
         <div class="stat">Double Attempts</div>
-        <div class="stat">Successful Doubles</div>
+        <div class="stat">Doubles Hit</div>
         <div class="stat">Double Success %</div>
       </div>
       <div class="stats-numbers">
@@ -159,33 +162,25 @@
         <div class="stat-box">0</div>
         <div class="stat-box">0</div>
     </div>
-    <div id="doubles-dashboard">
-    <div id="doubles-grid">
-      <div id="top-doubles" class="double-count-box">
-          🥇 <span class="double-count">99999</span>
-          <br><br>🥈 <span class="double-count">99999</span>
-          <br><br>🥉 <span class="double-count">99999</span>
-        </div>
-        <div id="worst-doubles" class="double-count-box">
-          🥇 <span class="double-count">99999</span>
-          <br><br>🥈 <span class="double-count">99999</span>
-          <br><br>🥉 <span class="double-count">99999</span>
-        </div>
-        <div id="top-doubles-table"></div>
-        <div id="worst-doubles-table"></div>
-    </div>
-    </div>
     <div class="stats-names">
-        <div class="stat">First Dart Success</div>
-        <div class="stat">First Visit Success</div>
-        <div class="stat">Second Visit Success</div>
+        <div class="stat">1st Dart</div>
+        <div class="stat">1st Visit</div>
+        <div class="stat">2nd Visit</div>
       </div>
       <div class="stats-numbers">
         <div class="stat-box">0</div>
         <div class="stat-box">0</div>
         <div class="stat-box">0</div>
-      </div>
     </div>
+    <div id="doubles-grid">
+      <div id="top-doubles-table"></div>
+      <div id="worst-doubles-table"></div>
+    </div>
+    <div id="doubles-radar-container" class="graph-wrapper">
+    <canvas id="doubles-radar"></canvas></div>
+    </div>
+    </div>
+    
     
     <aside id="view-stats-select">
       <button id="btn-quick">Summary</button>
@@ -194,9 +189,9 @@
       <button id="btn-doubling">Doubling</button>
     </aside>
     </div>
-    <aside class="buttons">
+    <aside id="stats-buttons" class="buttons">
       <button id="back-to-home" class="switch-page">&lt;&lt; Home</button>
-      <button id="back-to-tracker" class="switch-page">&lt; Back To Tracker</button>
+      <button id="back-to-tracker" class="switch-page">&lt; Tracker</button>
     </aside>
   </section>
   
