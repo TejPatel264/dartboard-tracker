@@ -151,6 +151,87 @@ export function createLineChart(canvas,x,y) {
     })
 }
 
+export function createRadarChart(canvas,labels,dataset) {
+    let ctx = canvas.getContext("2d")
+    return new Chart (ctx, {
+        type: "radar",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "Checkout %",
+                    data: dataset,
+
+                    borderColor: "#245e52",
+                    backgroundColor: "#3fa18c55",
+                    pointerBackgroundColor: "#3fa18c11",
+                    pointBorderColor: "#fff",
+                    borderWidth: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    displayColors: false,
+                    borderWidth: 1,
+                    backgroundColor: "#1a1a1a",
+                    borderColor: "#111",
+                    titleColor: "#fff",
+                    bodyColor: "#f5f5f5",
+                    titleAlign: "center",
+                    bodyAlign: "center",
+                    cornerRadius: 6,
+                    padding: 10,
+                    animation: {
+                        duration: 250,
+                        easing: "easeOutCubic"
+                    }
+                }
+            },
+            scales: {
+                r: {
+                    grid: {
+                        color: "#f5f5f555"
+                    },
+                    pointLabels: {
+                        color: "#f5f5f5"
+                    },
+                    angleLines: {
+                        color: "#f5f5f511"
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 100,
+                    ticks: {
+                        display: false,
+                        stepSize: 20,
+                        precision: 0,
+                        color: "#f5f5f5",
+                        backdropColor: "transparent"
+                    }
+                }
+            },
+            elements: {
+                line: {
+                    tension: 0.2
+                }
+            }
+        }
+    })
+}
+
+export function updateRadarChart(chart, labels, dataset) {
+    if (!chart) return;
+
+    chart.data.labels = labels
+    chart.data.datasets[0].data = dataset
+    chart.update();
+}
+
 export function updateBarChart(chart, x, y, total) {
     if (!chart) return;
 
@@ -172,6 +253,7 @@ export function updateLineChart(chart, x, y) {
 
     chart.update();
 }
+
 
 
 function drawBlankDartboard(canvas) {
@@ -345,8 +427,8 @@ export function createHeatmap(dartboardCanvas, dartMarkerCanvas, heatmapCanvas, 
     dartMarkerCanvas.getContext("2d").clearRect(0,0,dartMarkerCanvas.width,dartMarkerCanvas.height)
     heatmapCanvas.getContext("2d", {willReadFrequently: true}).clearRect(0,0,heatmapCanvas.width,heatmapCanvas.height)
     drawBlankDartboard(dartboardCanvas);
+    if (!heatmap) setTimeout(() => drawAllDarts(dartMarkerCanvas, sessions), 1000);
     page.addEventListener("transitionend", () => {
-        if (!heatmap) setTimeout(() => drawAllDarts(dartMarkerCanvas, sessions), 1000);
         if (heatmap) {drawHeatmap(heatmapCanvas,sessions); heatmapCanvas.style.opacity = 1;}
     }, {once: true});
 }

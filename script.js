@@ -6,7 +6,7 @@ import { init, update } from "./logic.js";
 import { redrawCanvas, getDartThrow, drawMagnifier, handleDartThrow, updateSessionStats } from "./logic.js";
 import { calculateLongTermStats } from "./stats.js";
 import { showQuickViewStats, showSessionStats, showAllTimeStats, showSessionSummary } from "./logic.js";
-import { chartStyles, createBarChart, updateBarChart, createHeatmap, createLineChart, updateLineChart } from "./charts.js";
+import { chartStyles, createBarChart, updateBarChart, createHeatmap, createRadarChart, updateRadarChart, createLineChart, updateLineChart } from "./charts.js";
 import { showSummaryStatView, showSessionStatView, showScoringStatView, showDoublingStatView, toTracker } from "./statsviews.js";
 import { saveProfileCard } from "./logic.js";
 
@@ -15,6 +15,8 @@ let dart;
 let session;
 let throwGraph;
 let visitGraph;
+let doubles;
+let doublesRadar;
 let sessionTimeline;
 let allSessions = await database.sessions.toArray();
 let longTermStats = calculateLongTermStats(allSessions);
@@ -29,9 +31,10 @@ const visitGraphCanvas = document.getElementById("visit-graph");
 const dartboardCanvas = document.querySelectorAll(".dartboard-heatmap");
 const dartMarkerCanvas = document.querySelectorAll(".dartmarkers");
 const heatmapCanvas = document.querySelectorAll(".heatmap");
+const doublesRadarCanvas = document.getElementById("doubles-radar")
 const allCanvas = document.querySelectorAll("canvas");
 const viewStatsSelect = document.getElementById("view-stats-select");
-const summaryTitle = document.querySelector("#stats h2");
+const info = document.getElementById("info")
 
 //for (let session of allSessions) {
 //  updateSessionStats(session);
@@ -45,7 +48,6 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log('Service Worker registration failed:', err));
   });
 }
-
 
 createPlayer()
 const player = await database.player.get("local");
@@ -80,6 +82,11 @@ canvas.addEventListener("pointerup", (e) => {
 });
 
 // BUTTON - event listeners
+
+btn.help.addEventListener("click", () => {
+  info.style.opacity = 0.99 - info.style.opacity;
+  info.style.zIndex = 100 - info.style.zIndex;
+})
 
 btn.bounceOut.addEventListener("click", () => {
   if (gameState.isPaused) return;
@@ -122,6 +129,8 @@ btn.sessionStats.addEventListener("click", () => {
   slider.style.transform = "translateX(0%)";
   updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
+  doubles = Object.entries(session.stats.checkout.segments).filter(([,s]) => s.attempts > 0)
+  updateRadarChart(doublesRadar,doubles.map(([key]) => key), doubles.map(([,s]) => s.percentage))
   showSessionStats(session)
 })
 
@@ -129,6 +138,8 @@ btn.allTimeStats.addEventListener("click", () => {
   slider.style.transform = "translateX(100%)";
   updateBarChart(throwGraph, Object.keys(longTermStats.scoring.throws), Object.values(longTermStats.scoring.throws), longTermStats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(longTermStats.scoring.visits), longTermStats.basic.totalVisits);
+  doubles = ["D20","D1","D18","D4","D13","D6","D10","D15","D2","D17","BULL","D3","D19","D7","D16","D8","D11","D14","D9","D12","D5"]
+  updateRadarChart(doublesRadar, doubles, doubles.map(d => longTermStats.checkout.segments[d].percentage))
   showAllTimeStats(longTermStats);
 })
 
@@ -156,6 +167,7 @@ btn.toGameMode.addEventListener("click", async () => {
   init(session);
   throwGraph = createBarChart(throwGraphCanvas, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws));
   visitGraph = createBarChart(visitGraphCanvas, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits));
+  doublesRadar = createRadarChart(doublesRadarCanvas,Object.keys(session.stats.checkout.segments),Object.values(session.stats.checkout.segments).map(s => s.percentage))
   updateBarChart(throwGraph, Object.keys(longTermStats.scoring.throws), Object.values(longTermStats.scoring.throws), longTermStats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(longTermStats.scoring.visits), longTermStats.basic.totalVisits);
   showAllTimeStats(longTermStats);
@@ -189,6 +201,7 @@ btn.toStats.addEventListener("click", async () => {
   appState.page = "stats";
   updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
+  updateRadarChart(doublesRadar,Object.keys(session.stats.checkout.segments),Object.values(session.stats.checkout.segments).map(s => s.percentage))
   //updateLineChart(sessionTimeline, session.raw.throws.map((_,i) => i), session.raw.throws.map(t => t.score));
   slider.style.transform = "translateX(0%)";
   page.style.transform = "translateX(-200vw)";
@@ -224,22 +237,23 @@ btn.backToHomeFromStats.addEventListener("click", () => {
   page.style.transform = "translateX(0vw)";
   viewStatsSelect.style.display = "none";
   page.addEventListener("transitionend", () => {
-    trackerPage.style.opacity = 1;
     document.querySelectorAll(".stat-view").forEach(view => view.removeAttribute("show"));
     if (throwGraph && gameState.isGame) throwGraph.destroy();
     if (visitGraph && gameState.isGame) visitGraph.destroy();
     btn.backToTracker.removeAttribute("hidden");
     page.style.transition = "transform 0.7s cubic-bezier(0.3,0.2,0.2,1)"
+    trackerPage.style.opacity = 1;
   }, {once: true});
 });
 
 // STATS VIEWS - event listeners
 
 btn.viewQuickStats.addEventListener("click", async () => {
+  heatmapCanvas[0].style.opacity = 0;
+  if (!pill.hasAttribute("hidden")) pill.toggleAttribute("hidden");
   showSummaryStatView();
   allSessions = await database.sessions.toArray();
   longTermStats = calculateLongTermStats(allSessions);
-  if (!pill.hasAttribute("hidden")) pill.toggleAttribute("hidden");
   showQuickViewStats(player,allSessions,longTermStats);
   createHeatmap(dartboardCanvas[0],dartMarkerCanvas[0],heatmapCanvas[0], allSessions);
 });
