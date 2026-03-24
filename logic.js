@@ -82,6 +82,7 @@ export function getDartThrow(e) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = width/rect.width;
   const scaleY = height/rect.height;
+
   const x = (e.clientX - rect.left)*scaleX;
   const y = (e.clientY - rect.top)*scaleY - 25;
   return {x,y}
@@ -259,13 +260,13 @@ function updateGameScore(session) {
     setTimeout(() => {
       ctx.fillStyle = "rgb(0,0,0,0.85)"
       ctx.fillRect(0,0,width,height);
-      ctx.fillStyle = "#ddd";
+      ctx.fillStyle = "#e4e4e4";
       ctx.font = "bold 40px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("BUST",center.x,center.y-10);
 
-      ctx.strokeStyle = "#888"
+      ctx.strokeStyle = "#2b2b2b"
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(center.x-20,center.y+8);
@@ -284,6 +285,35 @@ function updateGameScore(session) {
       update(session);
       gameState.isPaused = false;
     }, 2500);
+  }
+}
+
+
+function updatePracticeStats(session) {
+  const throws = session.raw.throws
+  const max = 10;
+  ctx.fillStyle = "whitesmoke";
+  ctx.font = "20px monospace";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.fillText(`Throw: ${throws.length}/${max}`,width-12,15);
+
+  ctx.font = "bold 24px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText(`Target: T20`,12,15);
+
+  if (throws.length == max) {
+    gameState.isPaused = true;
+    setTimeout(() => {
+      ctx.fillStyle = "rgb(0,0,0,0.85)"
+      ctx.fillRect(0,0,width,height);
+      ctx.fillStyle = "#f5f5f5";
+      ctx.font = "32px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Practice Complete",center.x,center.y-10);
+      btn.toStats.removeAttribute("hidden")
+    }, 1000)
   }
 }
 
@@ -859,7 +889,7 @@ function lastThreeThrows(session) {
   currentVisit
   .filter(normalThrow)
   .forEach((t,i,arr) => 
-    drawDartMarker(center.x+t.dx, center.y+t.dy, i == arr.length - 1));
+    drawDartMarker(t.x, t.y, i == arr.length - 1));
 
   currentVisit
   .forEach((t,i) => 
@@ -869,7 +899,7 @@ function lastThreeThrows(session) {
 }
 
 export function saveProfileCard(player) {
-  const profileCard = document.getElementById("summary-dashboard")
+  const profileCard = document.getElementById("summary-grid")
   html2canvas(profileCard, {
       backgroundColor: null,
       scale: 2
@@ -883,22 +913,43 @@ export function saveProfileCard(player) {
 
 export function redrawCanvas(gameState, session) {
   drawDartboard()
-  drawGameScore(gameState.scoreRemaining, gameState.leg, gameState.throw)
-  updateTrackerUI(session)
+
+  if (gameState.isGame) {
+    drawGameScore(gameState.scoreRemaining, gameState.leg, gameState.throw)
+    updateTrackerUI(session)
+  }
+  else {
+    //zoomDartboard(), 
+    updatePracticeStats(session);}
   lastThreeThrows(session)
 }
 
 export function init(session) {
   drawDartboard();
-  updateSessionStats(session);
-  updateTrackerUI(session);
-  if (gameState.isGame) {drawGameScore(), gameState.leg = 1, gameState.throw = 0};
+  
+  if (gameState.isGame) {
+    updateSessionStats(session);
+    updateTrackerUI(session);
+    drawGameScore(), 
+    gameState.leg = 1, 
+    gameState.throw = 0
+  }
+  else {
+    //zoomDartboard(), 
+    updatePracticeStats(session);}
 }
 
 export function update(session) {
   drawDartboard();
-  if (gameState.isGame) updateGameScore(session);
+
+  if (gameState.isGame) {
+    updateGameScore(session);
+    updateSessionStats(session);
+    updateTrackerUI(session);
+  }
+  else {
+    //zoomDartboard(), 
+    updatePracticeStats(session);}
   lastThreeThrows(session);
-  updateSessionStats(session);
-  updateTrackerUI(session);
+
 }

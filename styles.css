@@ -39,6 +39,10 @@ h2 {
     color: whitesmoke
 }
 
+#score-column {
+    display: flex;
+}
+
 section {
     display: flex;
     width: 100vw;

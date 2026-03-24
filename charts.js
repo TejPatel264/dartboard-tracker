@@ -1,3 +1,6 @@
+import { gameState } from "./states.js";
+
+
 export function chartStyles() {
     Chart.defaults.font.family = 'monospace';
 }
@@ -254,7 +257,15 @@ export function updateLineChart(chart, x, y) {
     chart.update();
 }
 
-
+function zoomDartboard(canvas,zoom=2) {
+    const ctx = canvas.getContext("2d")
+    ctx.save()
+    ctx.translate(-canvas.width/2,-canvas.height/2)
+    ctx.scale(zoom, zoom)
+    ctx.translate(0,103)
+    drawBlankDartboard(canvas)
+    ctx.restore()
+}
 
 function drawBlankDartboard(canvas) {
     const width = canvas.width
@@ -427,6 +438,7 @@ export function createHeatmap(dartboardCanvas, dartMarkerCanvas, heatmapCanvas, 
     dartMarkerCanvas.getContext("2d").clearRect(0,0,dartMarkerCanvas.width,dartMarkerCanvas.height)
     heatmapCanvas.getContext("2d", {willReadFrequently: true}).clearRect(0,0,heatmapCanvas.width,heatmapCanvas.height)
     drawBlankDartboard(dartboardCanvas);
+    //if (!gameState.isGame) zoomDartboard(dartboardCanvas);
     if (!heatmap) setTimeout(() => drawAllDarts(dartMarkerCanvas, sessions), 1000);
     page.addEventListener("transitionend", () => {
         if (heatmap) {drawHeatmap(heatmapCanvas,sessions); heatmapCanvas.style.opacity = 1;}

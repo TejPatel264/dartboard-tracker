@@ -24,7 +24,8 @@ let longTermStats = calculateLongTermStats(allSessions);
 const page = document.getElementById("pages");
 const subtitle = document.getElementById("subtitle");
 const pill = document.querySelector(".pill");
-const slider = document.querySelector(".slider")
+const slider = document.querySelector(".slider");
+const scoreColumn = document.getElementById("score-column")
 const trackerPage = document.getElementById("tracker");
 const throwGraphCanvas = document.getElementById("throw-graph");
 const visitGraphCanvas = document.getElementById("visit-graph");
@@ -100,6 +101,7 @@ btn.delLastThrow.addEventListener("click", () => {
   if (session.raw.throws.length == 0) return;
   if (gameState.isGame && session.raw.throws[session.raw.throws.length - 1].leg != gameState.leg) return;
   if (gameState.isGame && gameState.isPaused) {btn.newLeg.toggleAttribute("hidden"), gameState.isPaused = false};
+  if (gameState.isPaused) gameState.isPaused = false;
   session.raw.throws.pop();
   update(session);
   session.meta.duration = Date.now() - session.meta.date;
@@ -147,9 +149,18 @@ btn.allTimeStats.addEventListener("click", () => {
 
 btn.toPracticeMode.addEventListener("click", () => {
   return;
+  gameState.isGame = false;
+  gameState.isPaused = false;
   gameState.leg = null;
   subtitle.innerText = "Practice Mode";
   page.style.transform = "translateX(-100vw)";
+  session = createSession();
+  database.sessions.add(session);
+  session.meta.gameType = "doubles";
+  session.meta.format = "solo-practice";
+  scoreColumn.style.display = "none";
+  trackerPage.style.display = "flex";
+  init(session);
 })
 
 btn.toGameMode.addEventListener("click", async () => {
@@ -158,7 +169,8 @@ btn.toGameMode.addEventListener("click", async () => {
   gameState.isGame = true;
   gameState.isPaused = false;
   gameState.scoreRemaining = 501;
-  trackerPage.style.opacity = 1;
+  scoreColumn.style.display = "flex";
+  trackerPage.style.display = "flex";
   session = createSession();
   database.sessions.add(session);
   session.meta.gameType = "501";
@@ -168,13 +180,12 @@ btn.toGameMode.addEventListener("click", async () => {
   throwGraph = createBarChart(throwGraphCanvas, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws));
   visitGraph = createBarChart(visitGraphCanvas, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits));
   doublesRadar = createRadarChart(doublesRadarCanvas,Object.keys(session.stats.checkout.segments),Object.values(session.stats.checkout.segments).map(s => s.percentage))
-  updateBarChart(throwGraph, Object.keys(longTermStats.scoring.throws), Object.values(longTermStats.scoring.throws), longTermStats.basic.totalThrows);
-  updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(longTermStats.scoring.visits), longTermStats.basic.totalVisits);
+  //updateBarChart(throwGraph, Object.keys(longTermStats.scoring.throws), Object.values(longTermStats.scoring.throws), longTermStats.basic.totalThrows);
+  //updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(longTermStats.scoring.visits), longTermStats.basic.totalVisits);
   showAllTimeStats(longTermStats);
   //sessionTimeline = createLineChart(document.getElementById("session-timeline"), session.raw.throws.map((_,i) => i), session.raw.throws.map(t => t.score));\
   subtitle.innerText = "Game Mode";
-  page.style.transform = "translateX(-100vw)";
-  
+  page.style.transform = "translateX(-100vw)";  
 })
 
 btn.backToHomeFromTracker.addEventListener("click", () => {
@@ -187,6 +198,7 @@ btn.backToHomeFromTracker.addEventListener("click", () => {
     ctx.clearRect(0,0,c.width,c.height)
     if (throwGraph) throwGraph.destroy();
     if (visitGraph) visitGraph.destroy();
+    if (doublesRadar) doublesRadar.destroy();
     })}, {once: true}
   );
 })
@@ -201,7 +213,8 @@ btn.toStats.addEventListener("click", async () => {
   appState.page = "stats";
   updateBarChart(throwGraph, Object.keys(session.stats.scoring.throws), Object.values(session.stats.scoring.throws), session.stats.basic.totalThrows);
   updateBarChart(visitGraph, ["180","171+","133+","95+","57+"], Object.values(session.stats.scoring.visits), session.stats.basic.totalVisits);
-  updateRadarChart(doublesRadar,Object.keys(session.stats.checkout.segments),Object.values(session.stats.checkout.segments).map(s => s.percentage))
+  doubles = Object.entries(session.stats.checkout.segments).filter(([,s]) => s.attempts > 0)
+  updateRadarChart(doublesRadar,doubles.map(([key]) => key), doubles.map(([,s]) => s.percentage))
   //updateLineChart(sessionTimeline, session.raw.throws.map((_,i) => i), session.raw.throws.map(t => t.score));
   slider.style.transform = "translateX(0%)";
   page.style.transform = "translateX(-200vw)";
@@ -215,13 +228,13 @@ btn.toQuickStats.addEventListener("click", async () => {
   longTermStats = calculateLongTermStats(allSessions);
   showQuickViewStats(player, allSessions, longTermStats);
   if (!pill.hasAttribute("hidden")) pill.toggleAttribute("hidden");
-  trackerPage.style.opacity = 0;
   btn.backToTracker.toggleAttribute("hidden");
   showSummaryStatView();
   appState.page = "stats";
   page.style.transition = "transform 1s cubic-bezier(0.4, 1, 0.3, 1)"
-  page.style.transform = "translateX(-200vw)";
   viewStatsSelect.style.display = "none";
+  trackerPage.style.display = "none";
+  page.style.transform = "translateX(-100vw)";
   createHeatmap(dartboardCanvas[0],dartMarkerCanvas[0],heatmapCanvas[0], allSessions);
 })
 
@@ -233,16 +246,15 @@ btn.backToTracker.addEventListener("click", () => {
 
 btn.backToHomeFromStats.addEventListener("click", () => {
   appState.page = "home";
-  trackerPage.style.opacity = 0;
   page.style.transform = "translateX(0vw)";
   viewStatsSelect.style.display = "none";
   page.addEventListener("transitionend", () => {
     document.querySelectorAll(".stat-view").forEach(view => view.removeAttribute("show"));
     if (throwGraph && gameState.isGame) throwGraph.destroy();
     if (visitGraph && gameState.isGame) visitGraph.destroy();
+    if (doublesRadar && gameState.isGame) doublesRadar.destroy();
     btn.backToTracker.removeAttribute("hidden");
     page.style.transition = "transform 0.7s cubic-bezier(0.3,0.2,0.2,1)"
-    trackerPage.style.opacity = 1;
   }, {once: true});
 });
 
